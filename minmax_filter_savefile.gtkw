@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Sun Nov 13 21:57:06 2022
+[*] Sun Nov 13 22:17:53 2022
 [*]
 [dumpfile] "/home/oliver/6111_Final_Project/minmax_filter.vcd"
-[dumpfile_mtime] "Sun Nov 13 21:56:13 2022"
-[dumpfile_size] 41961710
+[dumpfile_mtime] "Sun Nov 13 22:15:41 2022"
+[dumpfile_size] 231277230
 [savefile] "/home/oliver/6111_Final_Project/minmax_filter_savefile.gtkw"
 [timestart] 0
 [size] 1920 1016
 [pos] -1 -1
-*-29.950575 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-31.859516 4160000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] minmax_filter_tb.
 [treeopen] minmax_filter_tb.dut.
 [sst_width] 228
@@ -27,7 +27,7 @@ minmax_filter_tb.dut.schmitt_trigger_state
 @420
 minmax_filter_tb.dut.max[9:0]
 minmax_filter_tb.dut.min[9:0]
-@421
+@10421
 minmax_filter_tb.dut.difference[16:0]
 [pattern_trace] 1
 [pattern_trace] 0

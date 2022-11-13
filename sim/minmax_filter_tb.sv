@@ -57,7 +57,8 @@ initial begin
             $display("i = %d", i);
         end
 
-        #100_000; // 10k clock cycles (which happens to be what the gap between samples would be at 10 kSps if clk is 100 MHz)
+        //#100_000; // 10k clock cycles (which happens to be what the gap between samples would be at 10 kSps if clk is 100 MHz)
+        #8000; // 800 clock cycles
     end
 
     $finish;
