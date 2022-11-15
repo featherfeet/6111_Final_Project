@@ -1,0 +1,23 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Mon Nov 14 08:41:40 2022
+[*]
+[dumpfile] "/home/oliver/6111_Final_Project/adc.vcd"
+[dumpfile_mtime] "Mon Nov 14 08:39:35 2022"
+[dumpfile_size] 34096
+[savefile] "/home/oliver/6111_Final_Project/adc_savefile.gtkw"
+[timestart] 0
+[size] 1920 1016
+[pos] -1 -1
+*-20.301252 2035000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] adc_tb.
+[sst_width] 228
+[signals_width] 86
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+adc_tb.mcp3008_adc_inst.clk
+@29
+adc_tb.mcp3008_adc_inst.spi_clk
+[pattern_trace] 1
+[pattern_trace] 0

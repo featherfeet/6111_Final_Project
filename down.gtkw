@@ -1,0 +1,25 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Mon Nov 14 04:02:01 2022
+[*]
+[dumpfile] "/home/oliver/6111_Final_Project/downscaler.vcd"
+[dumpfile_mtime] "Mon Nov 14 04:01:05 2022"
+[dumpfile_size] 11700
+[savefile] "/home/oliver/6111_Final_Project/down.gtkw"
+[timestart] 0
+[size] 1920 1016
+[pos] -101 -101
+*-19.022131 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 228
+[signals_width] 142
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+downscaler_tb.clk
+@10023
+downscaler_tb.i2s_data[31:0]
+@28
+downscaler_tb.i2s_data_valid
+downscaler_tb.x
+[pattern_trace] 1
+[pattern_trace] 0

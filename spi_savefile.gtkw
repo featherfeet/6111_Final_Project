@@ -1,0 +1,39 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Tue Nov 15 22:36:24 2022
+[*]
+[dumpfile] "/home/oliver/6111_Final_Project/spi.vcd"
+[dumpfile_mtime] "Tue Nov 15 22:36:06 2022"
+[dumpfile_size] 356910
+[savefile] "/home/oliver/6111_Final_Project/spi_savefile.gtkw"
+[timestart] 0
+[size] 1920 1016
+[pos] -1 -1
+*-24.009657 23050000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] spi_tb.
+[sst_width] 228
+[signals_width] 429
+[sst_expanded] 1
+[sst_vpaned_height] 286
+@28
+spi_tb.spi_inst.clk
+spi_tb.spi_inst.spi_clk
+spi_tb.spi_inst.spi_cs_n
+spi_tb.spi_inst.spi_dout
+spi_tb.spi_inst.spi_din
+spi_tb.spi_inst.data_received[16:0]
+spi_tb.spi_inst.spi_clk_falling
+spi_tb.spi_inst.spi_clk_rising
+@24
+spi_tb.spi_inst.bit_counter[4:0]
+@22
+spi_tb.spi_inst.data_to_send[16:0]
+@28
+spi_tb.spi_inst.axiiv
+spi_tb.spi_inst.axiid[16:0]
+spi_tb.spi_inst.axiov
+spi_tb.spi_inst.axiod[16:0]
+@29
+spi_tb.spi_inst.axiready
+[pattern_trace] 1
+[pattern_trace] 0
