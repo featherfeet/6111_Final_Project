@@ -32,7 +32,7 @@ initial begin
     #10;
     rst = 0;
 
-    #10000;
+    #100000;
 
     $finish;
 end
