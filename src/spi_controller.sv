@@ -15,6 +15,14 @@ module spi_controller #(parameter TRANSACTION_LENGTH_BITS = 8, parameter CLOCK_D
     input wire spi_din
 );
 
+// Clock-domain-crossing synchronizer to prevent metastability.
+logic spi_din_buffer_1;
+logic spi_din_buffered;
+always_ff @(posedge clk) begin
+    spi_din_buffer_1 <= spi_din;
+    spi_din_buffered <= spi_din_buffer_1;
+end
+
 localparam CLOCK_DIVISION_COUNT_MAX = (CLOCK_DIVISION / 2) - 1;
 
 logic [$clog2(CLOCK_DIVISION_COUNT_MAX) - 1:0] clock_divider;
@@ -87,7 +95,7 @@ always_ff @(posedge clk) begin
                         bit_counter <= bit_counter + 'b1;
                     end
                     else if (spi_clk_rising && ~spi_cs_n) begin
-                        data_received[TRANSACTION_LENGTH_BITS - bit_counter] <= spi_din;
+                        data_received[TRANSACTION_LENGTH_BITS - bit_counter] <= spi_din_buffered;
                     end
                 end
             end
@@ -98,7 +106,7 @@ always_ff @(posedge clk) begin
                     state <= STATE_WAIT;
                 end
                 else if (spi_clk_rising) begin
-                    axiod <= {data_received[TRANSACTION_LENGTH_BITS - 1:1], spi_din};
+                    axiod <= {data_received[TRANSACTION_LENGTH_BITS - 1:1], spi_din_buffered};
                     axiov <= 'b1;
                 end
                 else begin

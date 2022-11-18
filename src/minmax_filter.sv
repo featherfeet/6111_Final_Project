@@ -6,7 +6,9 @@ module minmax_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter LOOK_BACK = 50
     input wire rst,
     input wire axiiv,
     input wire signed [SAMPLE_DATA_WIDTH - 1:0] axiid,
-    output logic triggered
+    output logic triggered,
+    input wire btnr, // TODO REMOVE
+    output logic [15:0] led // TODO REMOVE
 );
 
 logic [$clog2(LOOK_BACK - 1) - 1:0] ram_write_addr;
@@ -37,6 +39,20 @@ logic signed [SAMPLE_DATA_WIDTH + 1:0] min;
 logic signed [SAMPLE_DATA_WIDTH + 1:0] max;
 logic signed [SAMPLE_DATA_WIDTH * 2:0] difference;
 assign difference = max - min;
+
+// TODO remove
+logic prev_btnr;
+always_ff @(posedge clk) begin
+    if (rst) begin
+        led <= 'b0;
+    end
+    else begin
+        if (~prev_btnr && btnr) begin
+            led <= difference;
+        end
+        prev_btnr <= btnr;
+    end
+end
 
 logic schmitt_trigger_state;
 logic prev_schmitt_trigger_state;

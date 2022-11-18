@@ -4,9 +4,10 @@
 module top_level(
     input wire clk,
     input wire btnc,
+    input wire btnr,
     output logic [6:0] ja,
     input wire ja7,
-//    output logic [7:0] jb,
+    output logic [7:0] jb,
     output logic [15:0] led
 //    output logic led16_r
 );
@@ -40,6 +41,7 @@ mcp3008_adc adc(
     .spi_din(ja7)
 );
 
+/*
 always_ff @(posedge sys_clk) begin
     if (rst) begin
         led <= 'b0;
@@ -50,31 +52,20 @@ always_ff @(posedge sys_clk) begin
         end
     end
 end
-
-/*
-logic downscaler_axiov;
-logic signed [SAMPLE_DATA_WIDTH - 1:0] downscaler_axiod;
-
-downscaler #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH)) downscaler_inst(
-    .clk(sys_clk),
-    .rst(rst),
-    .i2s_data(i2s_data),
-    .i2s_data_valid(i2s_data_valid),
-    .axiov(downscaler_axiov),
-    .axiod(downscaler_axiod)
-);
+*/
 
 logic transmission_detected;
 
-minmax_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .LOOK_BACK(50), .LOW_THRESHOLD(37), .HIGH_THRESHOLD(74)) (
+minmax_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .LOOK_BACK(50), .LOW_THRESHOLD(2), .HIGH_THRESHOLD(9)) (
     .clk(sys_clk),
     .rst(rst),
-    .axiiv(downscaler_axiov),
-    .axiid(downscaler_axiod),
-    .triggered(transmission_detected)
+    .axiiv(adc_axiov),
+    .axiid(adc_axiod[9:2]),
+    .triggered(transmission_detected),
+    .btnr(btnr),
+    .led(led) // TODO REMOVE
 );
 
 assign jb = {7'b0, transmission_detected};
-*/
 
 endmodule
