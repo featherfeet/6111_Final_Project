@@ -53,7 +53,7 @@ module xilinx_true_dual_port_read_first_1_clock_ram #(
     if (ena) begin
       if (wea) begin
         BRAM[addra] <= dina;
-        //$display("Writing %d to RAM %s at address %d.", dina, NAME, addra);
+        $display("Writing %d to RAM %s at address %d.", dina, NAME, addra);
       end
       ram_data_a <= BRAM[addra];
     end

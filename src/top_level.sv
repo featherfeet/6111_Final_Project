@@ -41,6 +41,9 @@ mcp3008_adc adc(
     .spi_din(ja7)
 );
 
+logic [SAMPLE_DATA_WIDTH - 1:0] adc_axiod_downsampled;
+assign adc_axiod_downsampled = adc_axiod[9:2];
+
 /*
 always_ff @(posedge sys_clk) begin
     if (rst) begin
@@ -60,10 +63,9 @@ minmax_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .LOOK_BACK(50), .LOW_THRE
     .clk(sys_clk),
     .rst(rst),
     .axiiv(adc_axiov),
-    .axiid(adc_axiod[9:2]),
+    .axiid(adc_axiod_downsampled),
     .triggered(transmission_detected),
     .btnr(btnr),
-    .led(led) // TODO REMOVE
 );
 
 assign jb = {7'b0, transmission_detected};
