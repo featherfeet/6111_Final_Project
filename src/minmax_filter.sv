@@ -6,7 +6,7 @@ module minmax_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter LOOK_BACK = 50
     input wire rst,
     input wire axiiv,
     input wire signed [SAMPLE_DATA_WIDTH - 1:0] axiid,
-    output logic triggered,
+    output logic triggered
 );
 
 logic [$clog2(LOOK_BACK - 1) - 1:0] ram_write_addr;

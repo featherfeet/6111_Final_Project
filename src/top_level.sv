@@ -8,7 +8,8 @@ module top_level(
     output logic [6:0] ja,
     input wire ja7,
     output logic [7:0] jb,
-    output logic [15:0] led
+    output logic [15:0] led,
+    input wire btnr
 //    output logic led16_r
 );
 
@@ -64,10 +65,20 @@ minmax_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .LOOK_BACK(50), .LOW_THRE
     .rst(rst),
     .axiiv(adc_axiov),
     .axiid(adc_axiod_downsampled),
-    .triggered(transmission_detected),
-    .btnr(btnr),
+    .triggered(transmission_detected)
 );
 
-assign jb = {7'b0, transmission_detected};
+logic uart_tx;
+
+filter_manager filter_manager_inst(
+    .clk(sys_clk),
+    .rst(rst),
+    .trigger(transmission_detected),
+    .axiiv(adc_axiov),
+    .axiid(adc_axiod[7:0]),
+    .uart_tx(uart_tx)
+);
+
+assign jb = {6'b0, uart_tx, transmission_detected};
 
 endmodule

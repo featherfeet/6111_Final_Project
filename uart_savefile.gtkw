@@ -1,0 +1,31 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Mon Nov 21 01:45:37 2022
+[*]
+[dumpfile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/uart.vcd"
+[dumpfile_mtime] "Mon Nov 21 01:44:36 2022"
+[dumpfile_size] 384156
+[savefile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/uart_savefile.gtkw"
+[timestart] 0
+[size] 1920 1011
+[pos] -1 -1
+*-23.742212 96635000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] uart_tb.
+[sst_width] 227
+[signals_width] 198
+[sst_expanded] 1
+[sst_vpaned_height] 284
+@28
+uart_tb.uart_inst.clk
+uart_tb.uart_inst.rst
+uart_tb.uart_inst.axiiv
+uart_tb.uart_inst.axiid[7:0]
+uart_tb.uart_inst.uart_tx
+uart_tb.uart_inst.state[1:0]
+@24
+uart_tb.uart_inst.tx_bit_counter[3:0]
+uart_tb.uart_inst.tx_clock_counter[9:0]
+@29
+uart_tb.uart_inst.axiready
+[pattern_trace] 1
+[pattern_trace] 0

@@ -54,7 +54,7 @@ initial begin
         #20_000; // 2k clock cycles on the 100 MHz clock, approximate time between samples
     end
 
-    #1000;
+    #5_000_000;
 
     $finish;
 end
