@@ -1,0 +1,160 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L pspice:OPAMP U1
+U 1 1 637ECA4E
+P 4150 2350
+F 0 "U1" H 4494 2396 50  0000 L CNN
+F 1 "OPAMP" H 4494 2305 50  0000 L CNN
+F 2 "" H 4150 2350 50  0001 C CNN
+F 3 "~" H 4150 2350 50  0001 C CNN
+	1    4150 2350
+	1    0    0    -1  
+$EndComp
+Text Label 4050 2050 0    50   ~ 0
++3.3V
+Text Label 4050 2650 0    50   ~ 0
+-3.3V
+Wire Wire Line
+	4450 2350 5000 2350
+$Comp
+L Analog_ADC:MCP3008 U2
+U 1 1 637ED7D3
+P 5600 2650
+F 0 "U2" H 5600 3331 50  0000 C CNN
+F 1 "MCP3008" H 5600 3240 50  0000 C CNN
+F 2 "" H 5700 2750 50  0001 C CNN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/21295d.pdf" H 5700 2750 50  0001 C CNN
+	1    5600 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_US R1
+U 1 1 637EF456
+P 3150 2300
+F 0 "R1" H 3218 2346 50  0000 L CNN
+F 1 "18k" H 3218 2255 50  0000 L CNN
+F 2 "" V 3190 2290 50  0001 C CNN
+F 3 "~" H 3150 2300 50  0001 C CNN
+	1    3150 2300
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_US R2
+U 1 1 637F079F
+P 3150 2600
+F 0 "R2" H 3218 2646 50  0000 L CNN
+F 1 "2k" H 3218 2555 50  0000 L CNN
+F 2 "" V 3190 2590 50  0001 C CNN
+F 3 "~" H 3150 2600 50  0001 C CNN
+	1    3150 2600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	3150 2450 3850 2450
+Connection ~ 3150 2450
+Text Label 3150 2150 0    50   ~ 0
++3.3V
+$Comp
+L power:GND #PWR?
+U 1 1 637F0E70
+P 3150 2750
+F 0 "#PWR?" H 3150 2500 50  0001 C CNN
+F 1 "GND" H 3155 2577 50  0000 C CNN
+F 2 "" H 3150 2750 50  0001 C CNN
+F 3 "" H 3150 2750 50  0001 C CNN
+	1    3150 2750
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4450 2350 4450 1900
+Wire Wire Line
+	3850 1900 3850 2250
+Connection ~ 4450 2350
+$Comp
+L Device:R_US Rf
+U 1 1 637F208F
+P 4150 1900
+F 0 "Rf" V 4355 1900 50  0000 C CNN
+F 1 "1k" V 4264 1900 50  0000 C CNN
+F 2 "" V 4190 1890 50  0001 C CNN
+F 3 "~" H 4150 1900 50  0001 C CNN
+	1    4150 1900
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4300 1900 4450 1900
+Wire Wire Line
+	3850 1900 4000 1900
+$Comp
+L Device:R_US Rin
+U 1 1 637F2E46
+P 3700 1900
+F 0 "Rin" V 3495 1900 50  0000 C CNN
+F 1 "1k" V 3586 1900 50  0000 C CNN
+F 2 "" V 3740 1890 50  0001 C CNN
+F 3 "~" H 3700 1900 50  0001 C CNN
+	1    3700 1900
+	0    1    1    0   
+$EndComp
+Connection ~ 3850 1900
+Wire Wire Line
+	2650 1900 3550 1900
+Text Notes 2650 1900 0    50   ~ 0
+From FM discriminator
+NoConn ~ 5000 2450
+NoConn ~ 5000 2550
+NoConn ~ 5000 2650
+NoConn ~ 5000 2750
+NoConn ~ 5000 2850
+NoConn ~ 5000 2950
+NoConn ~ 5000 3050
+Wire Wire Line
+	5500 3250 5650 3250
+$Comp
+L power:GND #PWR?
+U 1 1 637F3F81
+P 5650 3250
+F 0 "#PWR?" H 5650 3000 50  0001 C CNN
+F 1 "GND" H 5655 3077 50  0000 C CNN
+F 2 "" H 5650 3250 50  0001 C CNN
+F 3 "" H 5650 3250 50  0001 C CNN
+	1    5650 3250
+	1    0    0    -1  
+$EndComp
+Connection ~ 5650 3250
+Wire Wire Line
+	5650 3250 5800 3250
+Wire Wire Line
+	5500 2150 5650 2150
+Wire Wire Line
+	5650 2150 5650 1850
+Connection ~ 5650 2150
+Wire Wire Line
+	5650 2150 5800 2150
+Text Label 5650 1850 0    50   ~ 0
++3.3V
+Wire Wire Line
+	6200 2550 6500 2550
+Wire Wire Line
+	6200 2650 6500 2650
+Wire Wire Line
+	6200 2750 6500 2750
+Wire Wire Line
+	6200 2850 6500 2850
+Text Notes 6550 2700 0    50   ~ 0
+To FPGA
+$EndSCHEMATC

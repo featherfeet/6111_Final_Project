@@ -10,6 +10,8 @@ module filter_manager #(parameter SAMPLE_DATA_WIDTH = 8, parameter CAPTURE_LENGT
     output logic uart_tx
 );
 
+localparam MATCH_SCORE_WIDTH = 32;
+
 logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_write_addr;
 logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_read_addr;
 logic [SAMPLE_DATA_WIDTH - 1:0] ram_write_data;
@@ -47,6 +49,32 @@ uart uart_inst(
     .uart_tx(uart_tx)
 );
 
+logic matched_filter_axiiv;
+logic [SAMPLE_DATA_WIDTH - 1:0] matched_filter_axiid;
+
+logic matched_filter_1_axiov;
+logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_1_axiod;
+logic matched_filter_2_axiov;
+logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_2_axiod;
+
+matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT70D_bufferdump_1_zero_mean.bin")) matched_filter_1(
+    .clk(clk),
+    .rst(rst),
+    .axiiv(matched_filter_axiiv),
+    .axiid(matched_filter_axiid),
+    .axiov(matched_filter_1_axiov),
+    .axiod(matched_filter_1_axiod)
+);
+
+matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT3D_bufferdump_1_zero_mean.bin")) matched_filter_2(
+    .clk(clk),
+    .rst(rst),
+    .axiiv(matched_filter_axiiv),
+    .axiid(matched_filter_axiid),
+    .axiov(matched_filter_2_axiov),
+    .axiod(matched_filter_2_axiod)
+);
+
 localparam STATE_START = 4'b0001;
 localparam STATE_CAPTURE = 4'b0010;
 localparam STATE_DUMP = 4'b0100;
@@ -61,6 +89,8 @@ always_ff @(posedge clk) begin
         capturing <= 'b0;
         uart_axiiv <= 'b0;
         uart_axiid <= 'b0;
+        matched_filter_axiiv <= 'b0;
+        matched_filter_axiid <= 'b0;
     end
     else begin
         case (state)
@@ -92,7 +122,7 @@ always_ff @(posedge clk) begin
                 end
                 else if (uart_axiready && ~uart_axiiv) begin
                     uart_axiiv <= 1'b1;
-                    uart_axiid <= ram_read_data; // The RAM takes 2 clock cycles to read, which is much shorter than sending one byte over UART, so we don't have to worry about pipelining.
+                    uart_axiid <= ram_read_data; // The RAM takes 2 clock cycles to read, which is much shorter than sending one byte over UART, so the RAM read will be long done by the time we get here.
                     ram_read_addr <= ram_read_addr + 'b1;
                 end
                 else begin

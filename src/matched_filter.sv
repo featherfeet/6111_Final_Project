@@ -1,16 +1,20 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_WIDTH = 16, parameter CAPTURE_LENGTH = 1000, parameter FINGERPRINT_MEMORY_FILE = "") (
+module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_WIDTH = 32, parameter CAPTURE_LENGTH = 1000, parameter FINGERPRINT_MEMORY_FILE = "") (
     input wire clk,
     input wire rst,
     input wire axiiv,
     input wire [SAMPLE_DATA_WIDTH - 1:0] axiid,
     output logic axiov,
-    output logic [MATCH_SCORE_WIDTH - 1:0] axiod
+    output logic [MATCH_SCORE_WIDTH - 1:0] axiod,
+    output logic [MATCH_SCORE_WIDTH - 1:0] dot_product_out
 );
 
     logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_read_addr;
+    logic ram_read_addr_was_valid;
+    logic ram_read_addr_was_valid_pipe_1;
+    logic ram_read_addr_was_valid_pipe_2;
     logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_write_addr;
     logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_write_data;
     logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_read_data;
@@ -41,8 +45,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
     logic [SAMPLE_DATA_WIDTH - 1:0] axiid_pipe_2;
     logic [$clog2(CAPTURE_LENGTH) - 1:0] sample_counter;
     logic [$clog2(CAPTURE_LENGTH) - 1:0] phase_shift;
-    logic signed [31:0] dot_product;
-    logic signed [31:0] max_dot_product;
+    logic signed [MATCH_SCORE_WIDTH - 1:0] dot_product;
+    logic signed [MATCH_SCORE_WIDTH - 1:0] max_dot_product;
 
     logic [2:0] state;
     localparam STATE_SUM = 3'b001;
@@ -60,6 +64,10 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
             axiid_pipe_2 <= 'b0;
             dot_product <= 'b0;
             max_dot_product <= 'b0;
+            sample_counter <= 'b0;
+            ram_read_addr_was_valid <= 'b0;
+            ram_read_addr_was_valid_pipe_1 <= 'b0;
+            ram_read_addr_was_valid_pipe_2 <= 'b0;
             state <= STATE_SUM;
         end
         else begin
@@ -85,6 +93,7 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                             sample_counter <= 'b0;
                         end
                     end
+                    axiov <= 1'b0;
                 end
                 STATE_FILTER: begin
                     if (phase_shift == CAPTURE_LENGTH) begin
@@ -93,6 +102,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                     end
 
                     if (sample_counter == CAPTURE_LENGTH) begin
+                        $display("Dot product for phase shift %d is %d.", phase_shift, dot_product);
+                        dot_product_out <= dot_product;
                         if (dot_product > max_dot_product) begin
                             max_dot_product <= dot_product;
                         end
@@ -102,10 +113,14 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                     else begin
                         ram_read_addr <= (phase_shift > sample_counter) ? 'b0 : sample_counter - phase_shift;
 
+                        ram_read_addr_was_valid <= (phase_shift < sample_counter);
+                        ram_read_addr_was_valid_pipe_1 <= ram_read_addr_was_valid;
+                        ram_read_addr_was_valid_pipe_2 <= ram_read_addr_was_valid_pipe_1;
+
                         axiid_pipe_1 <= axiid;
                         axiid_pipe_2 <= axiid_pipe_1; // Delay axiid by 2 clock cycles because the RAM takes 2 clock cycles to read.
 
-                        dot_product <= dot_product + ram_read_data * ($signed(axiid_pipe_2) - $signed(sum_accumulator));
+                        dot_product <= dot_product + (ram_read_addr_was_valid_pipe_2 ? ram_read_data : 'sd0) * ($signed(axiid_pipe_2) - $signed(sum_accumulator));
 
                         sample_counter <= sample_counter + 'b1;
                     end
@@ -113,6 +128,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                 STATE_OUTPUT: begin
                     $display("max_dot_product: %d", max_dot_product);
                     $display("Matched filter transitioning to STATE_SUM.");
+                    axiov <= 1'b1;
+                    axiod <= max_dot_product;
                     state <= STATE_SUM;
                 end
                 default: begin

@@ -26,6 +26,8 @@ int correlate(Signal a, Signal b) {
         return 0;
     }
 
+    FILE *output_file = fopen("correlation.bin", "wb");
+
     int8_t *a_zero_mean = malloc(a.length);
     int8_t *b_zero_mean = malloc(a.length);
     uint32_t a_accumulator = 0;
@@ -42,6 +44,8 @@ int correlate(Signal a, Signal b) {
         b_zero_mean[i] = b.data[i] - b_accumulator;
     }
 
+    int *output_buffer = (int *) calloc(a.length, sizeof(int));
+
     int32_t max = 0;
     for (int phase_shift = 0; phase_shift < a.length; phase_shift++) {
         int32_t dot_product = 0;
@@ -55,10 +59,16 @@ int correlate(Signal a, Signal b) {
         if (dot_product > max) {
             max = dot_product;
         }
+
+        output_buffer[phase_shift] = dot_product;
     }
+
+    fwrite(output_buffer, sizeof(int), a.length, output_file);
+    fclose(output_file);
 
     free(a_zero_mean);
     free(b_zero_mean);
+    free(output_buffer);
 
     return max;
 }
