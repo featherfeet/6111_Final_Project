@@ -18,7 +18,7 @@ logic [SAMPLE_DATA_WIDTH - 1:0] ram_write_data;
 logic [SAMPLE_DATA_WIDTH - 1:0] ram_read_data;
 logic capturing;
 
-logic [$clog2(CAPTURE_LENGTH) - 1:0] filter_repetitions_counter;
+logic [$clog2(CAPTURE_LENGTH * 2 + 1) - 1:0] filter_repetitions_counter;
 
 xilinx_true_dual_port_read_first_1_clock_ram #(.RAM_WIDTH(SAMPLE_DATA_WIDTH), .RAM_DEPTH(CAPTURE_LENGTH), .RAM_PERFORMANCE("HIGH_PERFORMANCE"), .NAME("Filter manager capture buffer")) capture_buffer (
     .addra(ram_write_addr),
@@ -139,7 +139,7 @@ always_ff @(posedge clk) begin
             end
             STATE_FILTER: begin
                 if (ram_read_addr == CAPTURE_LENGTH + 2) begin
-                    if (filter_repetitions_counter == CAPTURE_LENGTH) begin
+                    if (filter_repetitions_counter == CAPTURE_LENGTH * 2) begin
                         $display("Filter manager entering START state.");
                         filter_repetitions_counter <= 'b0;
                         state <= STATE_START;
