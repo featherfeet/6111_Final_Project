@@ -3,6 +3,8 @@
 
 module filter_manager_tb;
 
+localparam CAPTURE_LENGTH = 1000;
+
 logic clk;
 logic rst;
 
@@ -23,10 +25,14 @@ filter_manager #(.SAMPLE_DATA_WIDTH(8), .CAPTURE_LENGTH(1000)) filter_manager_in
     .axiid(axiid)
 );
 
+logic [7:0] test_signal_buffer [0:CAPTURE_LENGTH - 1];
+
 initial begin
     $dumpfile("filter_manager.vcd");
     $dumpvars(0, filter_manager_tb);
     $display("Starting sim...");
+
+    $readmemh("sim/FT70D_bufferdump_2.memh", test_signal_buffer);
 
     clk = 0;
     rst = 0;
@@ -48,13 +54,33 @@ initial begin
 
     for (int i = 0; i < 1000; i = i + 1) begin
         axiiv = 1;
-        axiid = i;
+        axiid = test_signal_buffer[i];
         #10;
         axiiv = 0;
         #20_000; // 2k clock cycles on the 100 MHz clock, approximate time between samples
     end
 
-    #5_000_000;
+    #40_000_000;
+
+    $readmemh("sim/FT3D_bufferdump_2.memh", test_signal_buffer);
+
+    #100;
+
+    trigger = 1;
+    #10;
+    trigger = 0;
+
+    #100;
+
+    for (int i = 0; i < 1000; i = i + 1) begin
+        axiiv = 1;
+        axiid = test_signal_buffer[i];
+        #10;
+        axiiv = 0;
+        #20_000; // 2k clock cycles on the 100 MHz clock, approximate time between samples
+    end
+
+    #40_000_000;
 
     $finish;
 end

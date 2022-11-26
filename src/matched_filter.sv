@@ -110,7 +110,7 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                         phase_shift <= phase_shift + 'b1;
                         sample_counter <= 'b0;
                     end
-                    else begin
+                    else if (axiiv) begin
                         ram_read_addr <= (phase_shift > sample_counter) ? 'b0 : sample_counter - phase_shift;
 
                         ram_read_addr_was_valid <= (phase_shift < sample_counter);
@@ -120,13 +120,13 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                         axiid_pipe_1 <= axiid;
                         axiid_pipe_2 <= axiid_pipe_1; // Delay axiid by 2 clock cycles because the RAM takes 2 clock cycles to read.
 
-                        dot_product <= dot_product + (ram_read_addr_was_valid_pipe_2 ? ram_read_data : 'sd0) * ($signed(axiid_pipe_2) - $signed(sum_accumulator));
+                        dot_product <= dot_product + $signed($signed(ram_read_addr_was_valid_pipe_2 ? ram_read_data : 'sd0) * ($signed(axiid_pipe_2) - $signed(sum_accumulator)));
 
                         sample_counter <= sample_counter + 'b1;
                     end
                 end
                 STATE_OUTPUT: begin
-                    $display("max_dot_product: %d", max_dot_product);
+                    $display("max_dot_product for %s: %d", FINGERPRINT_MEMORY_FILE, $signed(max_dot_product));
                     $display("Matched filter transitioning to STATE_SUM.");
                     axiov <= 1'b1;
                     axiod <= max_dot_product;

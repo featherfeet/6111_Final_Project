@@ -4,7 +4,7 @@ import serial
 import numpy as np
 import matplotlib.pyplot as plt
 
-s = serial.Serial("/dev/ttyUSB2", 115200, parity = serial.PARITY_ODD)
+s = serial.Serial("/dev/ttyUSB0", 115200, parity = serial.PARITY_ODD)
 if s.in_waiting == 1:
     s.read(s.in_waiting)
 
