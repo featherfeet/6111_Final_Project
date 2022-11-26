@@ -1,18 +1,18 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Wed Nov 23 23:37:46 2022
+[*] Sat Nov 26 03:24:18 2022
 [*]
 [dumpfile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/matched_filter.vcd"
-[dumpfile_mtime] "Wed Nov 23 23:36:52 2022"
-[dumpfile_size] 104006351
+[dumpfile_mtime] "Sat Nov 26 03:23:55 2022"
+[dumpfile_size] 229159435
 [savefile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/matched_filter_savefile.gtkw"
 [timestart] 0
 [size] 1920 1011
 [pos] -1 -1
-*-30.416624 5453000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-34.531902 6780000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] matched_filter_tb.
 [treeopen] matched_filter_tb.matched_filter_inst.
-[sst_width] 227
+[sst_width] 295
 [signals_width] 281
 [sst_expanded] 1
 [sst_vpaned_height] 284
@@ -24,11 +24,16 @@ matched_filter_tb.matched_filter_inst.axiid[7:0]
 @28
 matched_filter_tb.matched_filter_inst.state[2:0]
 @24
-matched_filter_tb.matched_filter_inst.sample_counter[9:0]
-@22
 matched_filter_tb.matched_filter_inst.ram_read_addr[9:0]
+@22
 matched_filter_tb.matched_filter_inst.ram_read_data[7:0]
-@10420
+@420
+matched_filter_tb.matched_filter_inst.dot_product[31:0]
+@28
+matched_filter_tb.matched_filter_inst.ram_read_addr_was_valid
+matched_filter_tb.matched_filter_inst.ram_read_addr_was_valid_pipe_1
+matched_filter_tb.matched_filter_inst.ram_read_addr_was_valid_pipe_2
+@10421
 matched_filter_tb.matched_filter_inst.dot_product_out[31:0]
 @20000
 -
@@ -36,8 +41,6 @@ matched_filter_tb.matched_filter_inst.dot_product_out[31:0]
 -
 -
 @24
-matched_filter_tb.matched_filter_inst.phase_shift[9:0]
-@25
 matched_filter_tb.matched_filter_inst.max_dot_product[31:0]
 [pattern_trace] 1
 [pattern_trace] 0

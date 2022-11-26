@@ -43,8 +43,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
 
     logic [SAMPLE_DATA_WIDTH - 1:0] axiid_pipe_1;
     logic [SAMPLE_DATA_WIDTH - 1:0] axiid_pipe_2;
-    logic [$clog2(CAPTURE_LENGTH) - 1:0] sample_counter;
-    logic [$clog2(CAPTURE_LENGTH) - 1:0] phase_shift;
+    logic signed [$clog2(CAPTURE_LENGTH) + 1:0] sample_counter;
+    logic signed [$clog2(CAPTURE_LENGTH) + 1:0] phase_shift;
     logic signed [MATCH_SCORE_WIDTH - 1:0] dot_product;
     logic signed [MATCH_SCORE_WIDTH - 1:0] max_dot_product;
 
@@ -64,7 +64,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
             axiid_pipe_2 <= 'b0;
             dot_product <= 'b0;
             max_dot_product <= 'b0;
-            sample_counter <= 'b0;
+            sample_counter <= 'sd0;
+            phase_shift <= -CAPTURE_LENGTH;
             ram_read_addr_was_valid <= 'b0;
             ram_read_addr_was_valid_pipe_1 <= 'b0;
             ram_read_addr_was_valid_pipe_2 <= 'b0;
@@ -76,8 +77,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                     if (sample_counter == CAPTURE_LENGTH) begin
                         sum_accumulator <= sum_accumulator / CAPTURE_LENGTH; // TODO: Make this more efficient.
                         $display("Mean of signal computed: %d", sum_accumulator / CAPTURE_LENGTH);
-                        phase_shift <= 'b0;
-                        sample_counter <= 'b0;
+                        phase_shift <= -CAPTURE_LENGTH;
+                        sample_counter <= 'sd0;
                         dot_product <= 'b0;
                         max_dot_product <= 'b0;
                         $display("Matched filter transitioning to STATE_FILTER.");
@@ -107,13 +108,14 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                         if (dot_product > max_dot_product) begin
                             max_dot_product <= dot_product;
                         end
+                        dot_product <= 'sd0;
                         phase_shift <= phase_shift + 'b1;
                         sample_counter <= 'b0;
                     end
                     else if (axiiv) begin
                         ram_read_addr <= (phase_shift > sample_counter) ? 'b0 : sample_counter - phase_shift;
 
-                        ram_read_addr_was_valid <= (phase_shift < sample_counter);
+                        ram_read_addr_was_valid <= (phase_shift < sample_counter && sample_counter - phase_shift < CAPTURE_LENGTH);
                         ram_read_addr_was_valid_pipe_1 <= ram_read_addr_was_valid;
                         ram_read_addr_was_valid_pipe_2 <= ram_read_addr_was_valid_pipe_1;
 
