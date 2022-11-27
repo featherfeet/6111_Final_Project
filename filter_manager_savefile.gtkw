@@ -1,6 +1,6 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Sat Nov 26 03:39:36 2022
+[*] Sat Nov 26 05:21:51 2022
 [*]
 [dumpfile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/filter_manager.vcd"
 [dumpfile_mtime] "Sat Nov 26 03:35:53 2022"
@@ -9,7 +9,7 @@
 [timestart] 0
 [size] 1920 1011
 [pos] -1 -1
-*-34.199230 108770000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-34.199230 40060295000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] filter_manager_tb.
 [treeopen] filter_manager_tb.filter_manager_inst.
 [sst_width] 297
@@ -52,7 +52,7 @@ filter_manager_tb.filter_manager_inst.matched_filter_1.dot_product_out[31:0]
 filter_manager_tb.filter_manager_inst.matched_filter_2.axiov
 @c00421
 filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
-@28
+@29
 (0)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (1)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (2)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
@@ -85,7 +85,7 @@ filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (29)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (30)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (31)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
-@1401601
+@1401201
 -group_end
 @10420
 filter_manager_tb.filter_manager_inst.matched_filter_2.dot_product_out[31:0]
