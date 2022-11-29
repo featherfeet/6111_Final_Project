@@ -1,0 +1,39 @@
+Instructions needed for an SD card "CPU":
+    0 = No-op
+        nop
+    1 = Set CS high/low
+        set_cs <0 | 1>
+    2 = Read/write SPI byte
+        spi_transaction source_reg, dest_reg
+    3 = Send SD command
+        sd_command cmd_reg, arg_reg, dest_reg
+    4 = Load constant to lower half of register
+        load_lower_constant constant, dest_reg
+    5 = Load constant to upper half of register
+        load_upper_constant constant, dest_reg
+    6 = Move register to register
+        move source_reg, dest_reg
+    7 = Conditional jump to constant address
+        jmp <lt | eq | gt>, addr
+    8 = Compare
+        cmp reg_a, reg_b
+    9 = Bitwise AND
+        bitwise_and reg_a, reg_b, dest_reg
+    10 = Error
+        error err_code
+    11 = Multiply
+        mult reg_a, reg_b, dest_reg
+    12 = Add
+        add reg_a, reg_b, dest_reg
+    13 = Subtract
+        sub reg_a, reg_b, dest_reg
+    14 = Check for AXI bytes (writes to cond register)
+        check_axi
+    15 = Read AXI byte
+        read_axi dest_reg
+    16 = Write AXI byte
+        write_axi src_reg
+
+32-bit registers: r0/ip, r1/cond, r2, r3, r4, r5, r6, r7
+
+Instruction encoding is 4 bytes per instruction, first byte is operation, subsequent bytes are operands. Constants and addresses are two bytes long, registers are one byte long, comparison types are one byte long, error codes are one byte long. Multi-byte values are little-endian.

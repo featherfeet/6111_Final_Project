@@ -43,7 +43,7 @@ logic [3:0] state;
 logic [TRANSACTION_LENGTH_BITS - 1:0] data_to_send;
 logic [TRANSACTION_LENGTH_BITS - 1:0] data_received;
 
-logic [$clog2(TRANSACTION_LENGTH_BITS) - 1:0] bit_counter;
+logic [$clog2(TRANSACTION_LENGTH_BITS) + 1:0] bit_counter;
 
 always_ff @(posedge clk) begin
     if (rst) begin
