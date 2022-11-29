@@ -41,6 +41,8 @@ always_ff @(posedge clk) begin
         clock_divider <= 'b0;
         bits_counter <= 'b0;
         state <= STATE_IDLE;
+        axiod <= 'b0;
+        axiov <= 'b0;
     end
     else begin
         case (state)
@@ -76,6 +78,7 @@ always_ff @(posedge clk) begin
             STATE_TRANSMIT: begin
                 if (bits_counter == TRANSACTION_LENGTH_BITS) begin
                     spi_cs_n <= 1'b1;
+                    axiov <= 1'b1;
                     state <= STATE_WAIT;
                 end
                 else begin
@@ -98,6 +101,7 @@ always_ff @(posedge clk) begin
                 else begin
                     clock_divider <= clock_divider + 'b1;
                 end
+                axiov <= 1'b0;
             end
             default: begin
                 state <= STATE_IDLE;
