@@ -4,6 +4,7 @@ import os
 import os.path
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 #filenames = os.listdir("../fpga_signal_dumps")
 filenames = ["FT3D_bufferdump_1.bin", "FT3D_bufferdump_2.bin", "FT3D_bufferdump_3.bin", "FT70D_bufferdump_2.bin", "FT70D_bufferdump_3.bin", "FT70D_bufferdump_4.bin"]
@@ -35,10 +36,10 @@ for i, filename in enumerate(filenames):
                     buf2_value = 0
                 else:
                     buf2_value = samples[other_filename][x - phase_shift]
-                similarity.append(abs(buf2_value - buf1_value))
+                similarity.append(math.pow(buf2_value - buf1_value, 2))
             axs[i, j].plot(similarity)
             title = axs[i, j].set_title(f"{other_filename.replace('.bin', '')} = {sum(similarity)}")
-            if sum(similarity) < 3600:
+            if sum(similarity) < 30000:
                 plt.setp(title, color = "green")
             else:
                 plt.setp(title, color = "red")
