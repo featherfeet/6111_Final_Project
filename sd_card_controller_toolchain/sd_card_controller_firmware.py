@@ -29,9 +29,11 @@ firmware.jmp(COMPARISON_GREATER_THAN, "start_of_loop2")
 
 # Card is now in idle state.
 
-# Check the SD card version.
+# Check the SD card version using CMD8.
 firmware.load_lower_constant(8, REGISTER_R2)
+firmware.load_upper_constant(0, REGISTER_R2)
 firmware.load_lower_constant(0x1AA, REGISTER_R4)
+firmware.load_upper_constant(0, REGISTER_R4)
 firmware.sd_command(REGISTER_R2, REGISTER_R4, REGISTER_R4)
 
 # Bitwise-AND returned value with R1_ILLEGAL_COMMAND = 0x04 to check if command was illegal.
@@ -44,6 +46,8 @@ firmware.load_upper_constant(0, REGISTER_R5)
 firmware.cmp(REGISTER_R4, REGISTER_R5)
 firmware.jmp(COMPARISON_EQUAL, "sd_card_not_type_1")
 firmware.load_lower_constant(1, REGISTER_R7)
+firmware.cmp(REGISTER_R2, REGISTER_R2)
+firmware.jmp(COMPARISON_EQUAL, "initialization_loop")
 # If REGISTER_R4 == 0, receive 4 bytes and set sd_card_type to 2 if the last byte is 0xAA (any other byte is an error).
 firmware.load_lower_constant(0xFF, REGISTER_R5, label = "sd_card_not_type_1")
 firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
@@ -56,7 +60,47 @@ firmware.jmp(COMPARISON_EQUAL, "sd_card_type_2")
 firmware.error(2)
 firmware.load_lower_constant(2, REGISTER_R7, label = "sd_card_type_2")
 
-firmware.error(0)
+# Send CMD55 (application-specific command) and ACMD41 (initialize card and send host capacity support into) until card says it's ready.
+firmware.load_lower_constant(55, REGISTER_R2, label = "initialization_loop")
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.load_lower_constant(0, REGISTER_R4)
+firmware.load_upper_constant(0, REGISTER_R4)
+firmware.sd_command(REGISTER_R2, REGISTER_R4, REGISTER_R6)
+
+firmware.load_lower_constant(41, REGISTER_R2)
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.load_lower_constant(0, REGISTER_R4)
+firmware.load_upper_constant(0, REGISTER_R4)
+
+firmware.load_lower_constant(2, REGISTER_R3)
+firmware.load_upper_constant(0, REGISTER_R3)
+firmware.cmp(REGISTER_R7, REGISTER_R3) # Check if sd_card_type is 2.
+firmware.jmp(COMPARISON_EQUAL, "sdhc_support") # If sd_card_type == 2, GOTO sdhc_support, which sets R4 to 0x40000000.
+# Else, set R4 to 0.
+firmware.load_lower_constant(0, REGISTER_R4)
+firmware.load_upper_constant(0, REGISTER_R4)
+firmware.cmp(REGISTER_R2, REGISTER_R2)
+firmware.jmp(COMPARISON_EQUAL, "send_acmd41")
+firmware.load_lower_constant(0x0000, REGISTER_R4, label = "sdhc_support")
+firmware.load_upper_constant(0x4000, REGISTER_R4)
+firmware.sd_command(REGISTER_R2, REGISTER_R4, REGISTER_R6, label = "send_acmd41")
+
+# If return value of SD command was R1_READY_STATE = 0, jump out of the loop.
+firmware.load_lower_constant(0, REGISTER_R4)
+firmware.load_upper_constant(0, REGISTER_R4)
+firmware.cmp(REGISTER_R4, REGISTER_R6)
+firmware.jmp(COMPARISON_EQUAL, "got_ready_state")
+
+# Go back to start of loop.
+firmware.cmp(REGISTER_R2, REGISTER_R2)
+firmware.jmp(COMPARISON_EQUAL, "initialization_loop")
+
+# TODO: Add SDHC card support here by checking the OCR register. If SDHC, set R7 to 3.
+
+# Main loop where we process AXI commands and read data from the card.
+firmware.set_cs(1, label = "got_ready_state")
+
+firmware.error(0b101010)
 
 binary = firmware.get_program()
 

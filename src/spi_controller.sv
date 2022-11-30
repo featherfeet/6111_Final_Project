@@ -48,10 +48,11 @@ always_ff @(posedge clk) begin
         case (state)
             STATE_IDLE: begin
                 if (axiiv) begin
+                    $display("SPI sending byte 0x%h", axiid);
                     spi_cs_n <= 1'b0;
                     axiready <= 1'b0;
                     spi_clk <= 1'b0;
-                    spi_dout <= axiid[TRANSACTION_LENGTH_BITS - 1:0];
+                    spi_dout <= axiid[TRANSACTION_LENGTH_BITS - 1];
                     data_to_send <= axiid;
                     bits_counter <= 'b1;
                     clock_divider <= 'b0;
@@ -61,7 +62,6 @@ always_ff @(posedge clk) begin
                     spi_cs_n <= 1'b1;
                     axiready <= 1'b1;
                     spi_clk <= 1'b1;
-                    spi_dout <= 1'b0;
                 end
             end
             STATE_RECEIVE: begin

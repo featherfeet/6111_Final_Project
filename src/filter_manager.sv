@@ -113,8 +113,8 @@ always_ff @(posedge clk) begin
                     ram_write_addr <= 'b0;
                     ram_read_addr <= 'b0;
                     capturing <= 'b0;
-                    $display("Filter manager skipping DUMP state to go to FILTER."); // TODO PUT BACK
-                    state <= STATE_FILTER;
+                    $display("Filter manager entering FILTER state, skipping DUMP.");
+                    state <= STATE_FILTER; // TODO PUT BACK
                 end
                 else if (axiiv) begin
                     ram_write_addr <= ram_write_addr + 'b1;

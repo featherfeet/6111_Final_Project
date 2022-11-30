@@ -7,7 +7,8 @@ module sd_card_controller(
     output logic spi_cs_n,
     output logic spi_clk,
     output logic spi_dout,
-    output logic spi_din
+    output logic spi_din,
+    output logic [15:0] led
 );
 
 localparam PROGRAM_ROM_LENGTH = 1000;
@@ -93,12 +94,16 @@ localparam STATE_ERROR            = 5'b10000;
 
 logic spi_transaction_state;
 
-localparam SD_CARD_COMMAND_STATE_START           = 4'b0001;
-localparam SD_CARD_COMMAND_STATE_ARGUMENT        = 4'b0010;
-localparam SD_CARD_COMMAND_STATE_CRC             = 4'b0100;
-localparam SD_CARD_COMMAND_STATE_AWAIT_RESPONSE  = 4'b1000;
-logic [3:0] argument_byte_counter;
-logic [3:0] sd_card_command_state;
+localparam SD_CARD_COMMAND_STATE_WAIT_FOR_SPI    = 8'b00000001;
+localparam SD_CARD_COMMAND_STATE_START           = 8'b00000010;
+localparam SD_CARD_COMMAND_STATE_ARGUMENT_1      = 8'b00000100;
+localparam SD_CARD_COMMAND_STATE_ARGUMENT_2      = 8'b00001000;
+localparam SD_CARD_COMMAND_STATE_ARGUMENT_3      = 8'b00010000;
+localparam SD_CARD_COMMAND_STATE_ARGUMENT_4      = 8'b00100000;
+localparam SD_CARD_COMMAND_STATE_CRC             = 8'b01000000;
+localparam SD_CARD_COMMAND_STATE_AWAIT_RESPONSE  = 8'b10000000;
+logic [7:0] sd_card_command_state;
+logic [7:0] next_sd_card_command_state;
 
 reg [REGISTER_WIDTH - 1:0] register_file [NUM_REGISTERS - 1:0];
 
@@ -115,8 +120,9 @@ always_ff @(posedge clk) begin
         spi_axiiv <= 'b0;
         spi_axiid <= 'b0;
         spi_transaction_state <= 'b0;
-        argument_byte_counter <= 'd3;
         state <= STATE_READ_INSTRUCTION;
+        sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
+        next_sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
     end
     else begin
         case (state)
@@ -165,58 +171,84 @@ always_ff @(posedge clk) begin
                     end
                     OPERATION_SD_COMMAND: begin
                         case (sd_card_command_state)
+                            SD_CARD_COMMAND_STATE_WAIT_FOR_SPI: begin
+                                spi_axiiv <= 1'b0;
+                                if (~spi_axiiv && spi_axiready) begin
+                                    sd_card_command_state <= next_sd_card_command_state;
+                                end
+                            end
                             SD_CARD_COMMAND_STATE_START: begin
                                 $display("SD_COMMAND r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
                                 spi_cs_n <= 1'b0;
                                 spi_axiiv <= 1'b1;
                                 spi_axiid <= register_file[ram_read_data[23:16]] | 8'h40; // Bitwise-or the contents of cmd_reg with 0x40 and send over SPI.
-                                argument_byte_counter <= 'd3;
-                                sd_card_command_state <= SD_CARD_COMMAND_STATE_ARGUMENT;
+                                next_sd_card_command_state <= SD_CARD_COMMAND_STATE_ARGUMENT_1;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
                             end
-                            SD_CARD_COMMAND_STATE_ARGUMENT: begin
-                                if (spi_axiready) begin
-                                    spi_axiiv <= 1'b1;
-                                    spi_axiid <= register_file[ram_read_data[15:8]][8 * argument_byte_counter +: 8];
-                                    argument_byte_counter <= argument_byte_counter - 'd1;
-                                    if (argument_byte_counter == 'b0) begin
-                                        argument_byte_counter <= 'd3;
-                                        sd_card_command_state <= SD_CARD_COMMAND_STATE_CRC;
-                                    end
-                                end
-                                else begin
-                                    spi_axiiv <= 1'b0;
-                                end
+                            SD_CARD_COMMAND_STATE_ARGUMENT_1: begin
+                                spi_axiiv <= 1'b1;
+                                spi_axiid <= register_file[ram_read_data[15:8]][31:24];
+                                $display("Sending first argument byte: %h", register_file[ram_read_data[15:8]][31:24]);
+                                next_sd_card_command_state <= SD_CARD_COMMAND_STATE_ARGUMENT_2;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
+                            end
+                            SD_CARD_COMMAND_STATE_ARGUMENT_2: begin
+                                spi_axiiv <= 1'b1;
+                                spi_axiid <= register_file[ram_read_data[15:8]][23:16];
+                                $display("Sending second argument byte: %h", register_file[ram_read_data[15:8]][23:16]);
+                                next_sd_card_command_state <= SD_CARD_COMMAND_STATE_ARGUMENT_3;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
+                            end
+                            SD_CARD_COMMAND_STATE_ARGUMENT_3: begin
+                                spi_axiiv <= 1'b1;
+                                spi_axiid <= register_file[ram_read_data[15:8]][15:8];
+                                $display("Sending third argument byte: %h", register_file[ram_read_data[15:8]][15:8]);
+                                next_sd_card_command_state <= SD_CARD_COMMAND_STATE_ARGUMENT_4;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
+                            end
+                            SD_CARD_COMMAND_STATE_ARGUMENT_4: begin
+                                spi_axiiv <= 1'b1;
+                                spi_axiid <= register_file[ram_read_data[15:8]][7:0];
+                                $display("Sending fourth argument byte: %h", register_file[ram_read_data[15:8]][7:0]);
+                                next_sd_card_command_state <= SD_CARD_COMMAND_STATE_CRC;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
                             end
                             SD_CARD_COMMAND_STATE_CRC: begin
-                                if (spi_axiready) begin
-                                    spi_axiiv <= 1'b1;
-                                    if (register_file[ram_read_data[23:16]] == 'd0) begin
-                                        spi_axiid <= 8'd149;
-                                    end
-                                    else if (register_file[ram_read_data[23:16]] == 'd8) begin
-                                        spi_axiid <= 8'd135;
-                                    end
-                                    else begin
-                                        spi_axiid <= 8'hFF;
-                                    end
-                                    sd_card_command_state <= SD_CARD_COMMAND_STATE_AWAIT_RESPONSE;
+                                spi_axiiv <= 1'b1;
+                                if (register_file[ram_read_data[23:16]] == 'd0) begin
+                                    $display("Found CMD0, setting CRC to 0x95.");
+                                    spi_axiid <= 8'h95;
+                                end
+                                else if (register_file[ram_read_data[23:16]] == 'd8) begin
+                                    $display("Found CMD8, setting CRC to 0x87.");
+                                    spi_axiid <= 8'h87;
                                 end
                                 else begin
-                                    spi_axiiv <= 1'b0;
+                                    $display("Setting CRC to 255.");
+                                    spi_axiid <= 8'hFF;
                                 end
+                                next_sd_card_command_state <= SD_CARD_COMMAND_STATE_AWAIT_RESPONSE;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
                             end
                             SD_CARD_COMMAND_STATE_AWAIT_RESPONSE: begin
+                                spi_axiiv <= 1'b1;
                                 spi_axiid <= 8'hFF;
+
                                 if (spi_axiov && ((spi_axiod & 8'd128) == 'b0)) begin
                                     register_file[ram_read_data[7:0]] <= {24'b0, spi_axiod};
+                                    led <= {8'b0, spi_axiod};
                                     spi_axiiv <= 'b0;
                                     sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
                                     register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+
+                                    next_sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
+                                    sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
+
                                     state <= STATE_READ_INSTRUCTION;
                                 end
                             end
                             default: begin
-                                sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
                             end
                         endcase
                     end
@@ -285,10 +317,10 @@ always_ff @(posedge clk) begin
                         state <= STATE_ERROR;
                     end
                     OPERATION_MULT: begin
-                        $display("MULT r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
+                        /*$display("MULT r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
                         register_file[ram_read_data[7:0]] <= register_file[ram_read_data[23:16]] * register_file[ram_read_data[15:8]];
                         register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
-                        state <= STATE_READ_INSTRUCTION;
+                        state <= STATE_READ_INSTRUCTION;*/
                     end
                     OPERATION_ADD: begin
                         $display("ADD r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
@@ -318,6 +350,7 @@ always_ff @(posedge clk) begin
                 endcase
             end
             STATE_ERROR: begin
+                spi_axiiv <= 1'b0;
                 $display("SD card controller error: %d", error_code);
                 $finish;
             end

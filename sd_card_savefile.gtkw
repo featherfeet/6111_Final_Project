@@ -1,19 +1,19 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Tue Nov 29 23:38:12 2022
+[*] Wed Nov 30 05:18:22 2022
 [*]
 [dumpfile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/sd_card.vcd"
-[dumpfile_mtime] "Tue Nov 29 23:38:09 2022"
-[dumpfile_size] 30469
+[dumpfile_mtime] "Wed Nov 30 05:15:58 2022"
+[dumpfile_size] 17398838
 [savefile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/sd_card_savefile.gtkw"
-[timestart] 0
+[timestart] 614880000
 [size] 1920 1011
 [pos] -1 -1
-*-20.078787 39790000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.176510 659155000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] sd_card_tb.
 [treeopen] sd_card_tb.sd_card_controller_inst.
 [sst_width] 227
-[signals_width] 158
+[signals_width] 223
 [sst_expanded] 1
 [sst_vpaned_height] 284
 @28
@@ -29,7 +29,14 @@ sd_card_tb.sd_card_controller_inst.spi_controller_inst.spi_clk
 sd_card_tb.sd_card_controller_inst.spi_controller_inst.axiod[7:0]
 @28
 sd_card_tb.sd_card_controller_inst.spi_controller_inst.axiov
-@29
 sd_card_tb.sd_card_controller_inst.spi_cs_n
+sd_card_tb.sd_card_controller_inst.spi_controller_inst.axiiv
+sd_card_tb.sd_card_controller_inst.spi_controller_inst.axiid[7:0]
+sd_card_tb.sd_card_controller_inst.spi_controller_inst.axiready
+sd_card_tb.sd_card_controller_inst.spi_controller_inst.spi_dout
+@22
+sd_card_tb.sd_card_controller_inst.spi_controller_inst.axiid[7:0]
+@25
+sd_card_tb.sd_card_controller_inst.spi_controller_inst.bits_counter[3:0]
 [pattern_trace] 1
 [pattern_trace] 0

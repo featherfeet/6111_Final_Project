@@ -8,8 +8,16 @@ module top_level(
     output logic [6:0] ja,
     input wire ja7,
     output logic [7:0] jb,
+    output logic [7:0] jc,
     output logic [15:0] led,
-    input wire btnr
+    input wire btnr,
+    output logic sd_reset,
+    output logic sd_sck,
+    output logic sd_cmd,
+    input wire sd_dat0,
+    output logic sd_dat1,
+    output logic sd_dat2,
+    output logic sd_dat3
 //    output logic led16_r
 );
 
@@ -67,6 +75,22 @@ minmax_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .LOOK_BACK(50), .LOW_THRE
     .axiid(adc_axiod_downsampled),
     .triggered(transmission_detected)
 );
+
+assign sd_reset = rst;
+assign sd_dat1 = 1'b1;
+assign sd_dat2 = 1'b1;
+
+sd_card_controller sd_card(
+    .clk(sys_clk),
+    .rst(rst),
+    .spi_cs_n(sd_dat3),
+    .spi_clk(sd_sck),
+    .spi_dout(sd_cmd),
+    .spi_din(sd_dat0),
+    .led(led)
+);
+
+assign jc = {4'b0, sd_dat0, sd_cmd, sd_dat3, sd_sck};
 
 logic uart_tx;
 
