@@ -93,6 +93,13 @@ localparam STATE_ERROR            = 5'b10000;
 
 logic spi_transaction_state;
 
+localparam SD_CARD_COMMAND_STATE_START           = 4'b0001;
+localparam SD_CARD_COMMAND_STATE_ARGUMENT        = 4'b0010;
+localparam SD_CARD_COMMAND_STATE_CRC             = 4'b0100;
+localparam SD_CARD_COMMAND_STATE_AWAIT_RESPONSE  = 4'b1000;
+logic [3:0] argument_byte_counter;
+logic [3:0] sd_card_command_state;
+
 reg [REGISTER_WIDTH - 1:0] register_file [NUM_REGISTERS - 1:0];
 
 reg [7:0] error_code;
@@ -108,6 +115,7 @@ always_ff @(posedge clk) begin
         spi_axiiv <= 'b0;
         spi_axiid <= 'b0;
         spi_transaction_state <= 'b0;
+        argument_byte_counter <= 'd3;
         state <= STATE_READ_INSTRUCTION;
     end
     else begin
@@ -138,7 +146,7 @@ always_ff @(posedge clk) begin
                     OPERATION_SPI_TRANSACTION: begin
                         if (spi_transaction_state == 'd0 && spi_axiready) begin
                             $display("SPI_TRANSACTION r%d, r%d", ram_read_data[23:16], ram_read_data[15:8]);
-                            $display("    Wrote byte 0x%h to SPI.", register_file[ram_read_data[23:16]][7:0]);
+                            $display("    Wrote byte 0x%H to SPI.", register_file[ram_read_data[23:16]][7:0]);
                             spi_axiiv <= 1'b1;
                             spi_axiid <= register_file[ram_read_data[23:16]];
                             spi_transaction_state <= 'd1;
@@ -148,7 +156,7 @@ always_ff @(posedge clk) begin
 
                             if (spi_axiov) begin
                                 register_file[ram_read_data[15:8]] <= spi_axiod;
-                                $display("    Read byte 0x%h from SPI.", spi_axiod);
+                                $display("    Read byte 0x%H from SPI.", spi_axiod);
                                 spi_transaction_state <= 'd0;
                                 register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
                                 state <= STATE_READ_INSTRUCTION;
@@ -156,7 +164,61 @@ always_ff @(posedge clk) begin
                         end
                     end
                     OPERATION_SD_COMMAND: begin
-
+                        case (sd_card_command_state)
+                            SD_CARD_COMMAND_STATE_START: begin
+                                $display("SD_COMMAND r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
+                                spi_cs_n <= 1'b0;
+                                spi_axiiv <= 1'b1;
+                                spi_axiid <= register_file[ram_read_data[23:16]] | 8'h40; // Bitwise-or the contents of cmd_reg with 0x40 and send over SPI.
+                                argument_byte_counter <= 'd3;
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_ARGUMENT;
+                            end
+                            SD_CARD_COMMAND_STATE_ARGUMENT: begin
+                                if (spi_axiready) begin
+                                    spi_axiiv <= 1'b1;
+                                    spi_axiid <= register_file[ram_read_data[15:8]][8 * argument_byte_counter +: 8];
+                                    argument_byte_counter <= argument_byte_counter - 'd1;
+                                    if (argument_byte_counter == 'b0) begin
+                                        argument_byte_counter <= 'd3;
+                                        sd_card_command_state <= SD_CARD_COMMAND_STATE_CRC;
+                                    end
+                                end
+                                else begin
+                                    spi_axiiv <= 1'b0;
+                                end
+                            end
+                            SD_CARD_COMMAND_STATE_CRC: begin
+                                if (spi_axiready) begin
+                                    spi_axiiv <= 1'b1;
+                                    if (register_file[ram_read_data[23:16]] == 'd0) begin
+                                        spi_axiid <= 8'd149;
+                                    end
+                                    else if (register_file[ram_read_data[23:16]] == 'd8) begin
+                                        spi_axiid <= 8'd135;
+                                    end
+                                    else begin
+                                        spi_axiid <= 8'hFF;
+                                    end
+                                    sd_card_command_state <= SD_CARD_COMMAND_STATE_AWAIT_RESPONSE;
+                                end
+                                else begin
+                                    spi_axiiv <= 1'b0;
+                                end
+                            end
+                            SD_CARD_COMMAND_STATE_AWAIT_RESPONSE: begin
+                                spi_axiid <= 8'hFF;
+                                if (spi_axiov && ((spi_axiod & 8'd128) == 'b0)) begin
+                                    register_file[ram_read_data[7:0]] <= {24'b0, spi_axiod};
+                                    spi_axiiv <= 'b0;
+                                    sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
+                                    register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                                    state <= STATE_READ_INSTRUCTION;
+                                end
+                            end
+                            default: begin
+                                sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
+                            end
+                        endcase
                     end
                     OPERATION_LOAD_LOWER_CONSTANT: begin
                         $display("LOAD_LOWER_CONSTANT %d, r%d", {ram_read_data[15:8], ram_read_data[23:16]}, ram_read_data[7:0]);
@@ -171,16 +233,51 @@ always_ff @(posedge clk) begin
                         state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_MOVE: begin
-
+                        $display("MOVE r%d, r%d", ram_read_data[23:16], ram_read_data[15:8]);
+                        register_file[ram_read_data[15:8]] <= register_file[ram_read_data[23:16]];
+                        register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                        state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_JMP: begin
+                        if (ram_read_data[23:16] == COMPARISON_LESS_THAN) begin
+                            $display("JMP (if less than) to addr %d", {ram_read_data[7:0], ram_read_data[15:8]});
+                        end
+                        else if (ram_read_data[23:16] == COMPARISON_EQUAL) begin
+                            $display("JMP (if equal to) to addr %d", {ram_read_data[7:0], ram_read_data[15:8]});
+                        end
+                        else begin
+                            $display("JMP (if greater than) to addr %d", {ram_read_data[7:0], ram_read_data[15:8]});
+                        end
 
+                        if (ram_read_data[23:16] == register_file[REGISTER_COND]) begin
+                            register_file[REGISTER_IP] <= {16'b0, {ram_read_data[7:0], ram_read_data[15:8]}};
+                            $display("    Branch taken.\n");
+                        end
+                        else begin
+                            register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                            $display("    Branch not taken.\n");
+                        end
+                        state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_CMP: begin
-
+                        $display("CMP r%d=%d, r%d=%d", ram_read_data[23:16], register_file[ram_read_data[23:16]], ram_read_data[15:8], register_file[ram_read_data[15:8]]);
+                        if (register_file[ram_read_data[23:16]] < register_file[ram_read_data[15:8]]) begin
+                            register_file[REGISTER_COND] <= COMPARISON_LESS_THAN;
+                        end
+                        else if (register_file[ram_read_data[23:16]] == register_file[ram_read_data[15:8]]) begin
+                            register_file[REGISTER_COND] <= COMPARISON_EQUAL;
+                        end
+                        else begin
+                            register_file[REGISTER_COND] <= COMPARISON_GREATER_THAN;
+                        end
+                        register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                        state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_BITWISE_AND: begin
-
+                        $display("BITWISE_AND r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
+                        register_file[ram_read_data[7:0]] <= register_file[ram_read_data[23:16]] & register_file[ram_read_data[15:8]];
+                        register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                        state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_ERROR: begin
                         $display("ERROR %d", ram_read_data[23:16]);
@@ -188,13 +285,22 @@ always_ff @(posedge clk) begin
                         state <= STATE_ERROR;
                     end
                     OPERATION_MULT: begin
-
+                        $display("MULT r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
+                        register_file[ram_read_data[7:0]] <= register_file[ram_read_data[23:16]] * register_file[ram_read_data[15:8]];
+                        register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                        state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_ADD: begin
-
+                        $display("ADD r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
+                        register_file[ram_read_data[7:0]] <= register_file[ram_read_data[23:16]] + register_file[ram_read_data[15:8]];
+                        register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                        state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_SUB: begin
-
+                        $display("SUB r%d, r%d, r%d", ram_read_data[23:16], ram_read_data[15:8], ram_read_data[7:0]);
+                        register_file[ram_read_data[7:0]] <= register_file[ram_read_data[23:16]] - register_file[ram_read_data[15:8]];
+                        register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                        state <= STATE_READ_INSTRUCTION;
                     end
                     OPERATION_CHECK_AXI: begin
 

@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Tue Nov 29 06:34:22 2022
+[*] Tue Nov 29 23:38:12 2022
 [*]
 [dumpfile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/sd_card.vcd"
-[dumpfile_mtime] "Tue Nov 29 06:34:18 2022"
-[dumpfile_size] 32564
+[dumpfile_mtime] "Tue Nov 29 23:38:09 2022"
+[dumpfile_size] 30469
 [savefile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/sd_card_savefile.gtkw"
 [timestart] 0
 [size] 1920 1011
 [pos] -1 -1
-*-20.152569 39790000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-20.078787 39790000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] sd_card_tb.
 [treeopen] sd_card_tb.sd_card_controller_inst.
 [sst_width] 227

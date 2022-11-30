@@ -36,99 +36,105 @@ INSTRUCTION_LENGTH = 4
 class Assembler:
     def __init__(self):
         self.address_counter = 0
-        self.program = b''
+        self.program = bytearray()
+        self.label_table = {} # Keys are label names, values are the addresses of instructions.
+        self.addresses_to_fill_in = [] # Horrible hack: list of tuples where the first element of a tuple is a byte index in self.program and the second element is the name of the label whose address should get substituted in there. This lets us generate the final binary output "as we go" then go back afterwards and stick in the addresses of unknown labels (which, for forward jumps, may not be known on the first pass).
 
-    def nop(self):
+    def nop(self, label = ""):
         self.program += bytes([OPERATION_NOP, 0, 0, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def set_cs(self, state):
+    def set_cs(self, state, label = ""):
         self.program += bytes([OPERATION_SET_CS, state, 0, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def spi_transaction(self, source_reg, dest_reg):
+    def spi_transaction(self, source_reg, dest_reg, label = ""):
         self.program += bytes([OPERATION_SPI_TRANSACTION, source_reg, dest_reg, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def sd_command(self, cmd_reg, arg_reg, dest_reg):
+    def sd_command(self, cmd_reg, arg_reg, dest_reg, label = ""):
         self.program += bytes([OPERATION_SD_COMMAND, cmd_reg, arg_reg, dest_reg])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def load_lower_constant(self, constant, dest_reg):
+    def load_lower_constant(self, constant, dest_reg, label = ""):
         if constant > 0xFFFF:
             raise ValueError(f"Constant {hex(constant)} is too large. Must fit in two bytes.")
         self.program += bytes([OPERATION_LOAD_LOWER_CONSTANT, (constant & 0x00FF), (constant & 0xFF00) >> 8, dest_reg])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def load_upper_constant(self, constant, dest_reg):
+    def load_upper_constant(self, constant, dest_reg, label = ""):
         if constant > 0xFFFF:
             raise ValueError(f"Constant {hex(constant)} is too large. Must fit in two bytes.")
         self.program += bytes([OPERATION_LOAD_UPPER_CONSTANT, (constant & 0x00FF), (constant & 0xFF00) >> 8, dest_reg])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def move(self, source_reg, dest_reg):
+    def move(self, source_reg, dest_reg, label = ""):
         self.program += bytes([OPERATION_MOVE, source_reg, dest_reg, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def jmp(self, comparison, address):
-        if address > 0xFFFF:
-            raise ValueError(f"Address {hex(address)} is too large. Must fit in two bytes.")
-        self.program += bytes([OPERATION_JMP, comparison, (address & 0x00FF), (address & 0xFF00) >> 8])
-        addr = self.address_counter
+    def jmp(self, comparison, target_label, label = ""):
+        self.program += bytes([OPERATION_JMP, comparison, 0, 0]) # Fill spot for address with placeholder zeroes.
+        self.addresses_to_fill_in.append((self.address_counter + 2, target_label))
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return addr
 
-    def cmp(self, reg_a, reg_b):
+    def cmp(self, reg_a, reg_b, label = ""):
         self.program += bytes([OPERATION_CMP, reg_a, reg_b, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def bitwise_and(self, reg_a, reg_b, dest_reg):
+    def bitwise_and(self, reg_a, reg_b, dest_reg, label = ""):
         self.program += bytes([OPERATION_BITWISE_AND, reg_a, reg_b, dest_reg])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def error(self, error_code):
+    def error(self, error_code, label = ""):
         self.program += bytes([OPERATION_ERROR, error_code, 0, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def mult(self, reg_a, reg_b, dest_reg):
+    def mult(self, reg_a, reg_b, dest_reg, label = ""):
         self.program += bytes([OPERATION_MULT, reg_a, reg_b, dest_reg])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def add(self, reg_a, reg_b, dest_reg):
+    def add(self, reg_a, reg_b, dest_reg, label = ""):
         self.program += bytes([OPERATION_ADD, reg_a, reg_b, dest_reg])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def sub(self, reg_a, reg_b, dest_reg):
+    def sub(self, reg_a, reg_b, dest_reg, label = ""):
         self.program += bytes([OPERATION_SUB, reg_a, reg_b, dest_reg])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def check_axi(self):
+    def check_axi(self, label = ""):
         self.program += bytes([OPERATION_CHECK_AXI, 0, 0, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def read_axi(self, dest_reg):
+    def read_axi(self, dest_reg, label = ""):
         self.program += bytes([OPERATION_READ_AXI, dest_reg, 0, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
-    def write_axi(self, src_reg):
+    def write_axi(self, src_reg, label = ""):
         self.program += bytes([OPERATION_WRITE_AXI, src_reg, 0, 0])
+        self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
-        return self.address_counter - INSTRUCTION_LENGTH
 
     def get_program(self):
+        for pair in self.addresses_to_fill_in:
+            program_index = pair[0]
+            target_label = pair[1]
+            target_address = self.label_table[target_label]
+            self.program[program_index] = target_address & 0x00FF
+            self.program[program_index + 1] = (target_address & 0xFF00) >> 8
         return self.program
