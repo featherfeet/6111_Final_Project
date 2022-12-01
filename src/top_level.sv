@@ -99,7 +99,8 @@ filter_manager filter_manager_inst(
     .trigger(transmission_detected),
     .axiiv(adc_axiov),
     .axiid(adc_axiod[7:0]),
-    .uart_tx(uart_tx)
+    .uart_tx(uart_tx),
+    .led(led)
 );
 
 assign jb = {6'b0, uart_tx, transmission_detected};

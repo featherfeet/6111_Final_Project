@@ -1,5 +1,11 @@
-+=======================+=======================+====================================+
-| Launch Setup Clock    | Launch Hold Clock     | Pin                                |
-+=======================+=======================+====================================+
-| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | sd_card/register_file_reg[1][22]/D |
-+-----------------------+-----------------------+------------------------------------+
++=======================+=======================+=====================================================================+
+| Launch Setup Clock    | Launch Hold Clock     | Pin                                                                 |
++=======================+=======================+=====================================================================+
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_2/sum_accumulator[5]_i_1_psdsp/D |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_1/dot_product_reg[29]/D          |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_1/dot_product_reg[27]/D          |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_1/dot_product_reg[25]/D          |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_1/dot_product_reg[30]/D          |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_1/dot_product_reg[24]/D          |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_1/dot_product_reg[31]/D          |
++-----------------------+-----------------------+---------------------------------------------------------------------+

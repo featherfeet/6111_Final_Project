@@ -7,7 +7,8 @@ module filter_manager #(parameter SAMPLE_DATA_WIDTH = 8, parameter CAPTURE_LENGT
     input wire trigger,
     input wire axiiv,
     input wire [SAMPLE_DATA_WIDTH - 1:0] axiid,
-    output logic uart_tx
+    output logic uart_tx,
+    output logic [15:0] led
 );
 
 localparam MATCH_SCORE_WIDTH = 32;
@@ -98,8 +99,16 @@ always_ff @(posedge clk) begin
         matched_filter_axiiv_pipe_2 <= 'b0;
         matched_filter_axiid <= 'b0;
         filter_repetitions_counter <= 'b0;
+        led <= 'b0;
     end
     else begin
+        if (matched_filter_1_axiov) begin
+            led[0] <= (matched_filter_1_axiod < 'sd30_000);
+        end
+        if (matched_filter_2_axiov) begin
+            led[1] <= (matched_filter_2_axiod < 'sd30_000);
+        end
+
         case (state)
             STATE_START: begin
                 if (trigger) begin
