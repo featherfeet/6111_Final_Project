@@ -7,15 +7,14 @@ module sd_card_controller(
     output logic spi_cs_n,
     output logic spi_clk,
     output logic spi_dout,
-    output logic spi_din,
-    output logic [15:0] led
+    output logic spi_din
 );
 
 localparam PROGRAM_ROM_LENGTH = 1000;
 localparam INSTRUCTION_WIDTH_BITS = 32;
 localparam INSTRUCTION_LENGTH_BYTES = INSTRUCTION_WIDTH_BITS / 8;
 localparam REGISTER_WIDTH = 32;
-localparam NUM_REGISTERS = 8;
+localparam NUM_REGISTERS = 11;
 
 localparam OPERATION_NOP = 0;
 localparam OPERATION_SET_CS = 1;
@@ -236,7 +235,6 @@ always_ff @(posedge clk) begin
 
                                 if (spi_axiov && ((spi_axiod & 8'd128) == 'b0)) begin
                                     register_file[ram_read_data[7:0]] <= {24'b0, spi_axiod};
-                                    led <= {8'b0, spi_axiod};
                                     spi_axiiv <= 'b0;
                                     sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
                                     register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;

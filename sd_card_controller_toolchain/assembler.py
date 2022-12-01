@@ -26,6 +26,9 @@ REGISTER_R4 = 4
 REGISTER_R5 = 5
 REGISTER_R6 = 6
 REGISTER_R7 = 7
+REGISTER_R8 = 8
+REGISTER_R9 = 9
+REGISTER_R10 = 10
 
 COMPARISON_LESS_THAN = 0
 COMPARISON_EQUAL = 1
@@ -79,11 +82,28 @@ class Assembler:
         self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
 
-    def jmp(self, comparison, target_label, label = ""):
+    def jmp_conditional(self, comparison, target_label, label = ""):
         self.program += bytes([OPERATION_JMP, comparison, 0, 0]) # Fill spot for address with placeholder zeroes.
         self.addresses_to_fill_in.append((self.address_counter + 2, target_label))
         self.label_table[label] = self.address_counter
         self.address_counter += INSTRUCTION_LENGTH
+
+    def jmplt(self, target_label, label = ""):
+        self.jmp_conditional(COMPARISON_LESS_THAN, target_label, label = label)
+
+    def jmpeq(self, target_label, label = ""):
+        self.jmp_conditional(COMPARISON_EQUAL, target_label, label = label)
+
+    def jmpgt(self, target_label, label = ""):
+        self.jmp_conditional(COMPARISON_GREATER_THAN, target_label, label = label)
+
+    def jmp(self, target_label, label = ""):
+        self.cmp(REGISTER_R2, REGISTER_R2, label = label)
+        self.jmpeq(target_label)
+
+    def jmpneq(self, target_label, label = ""):
+        self.jmplt(target_label, label = label)
+        self.jmpgt(target_label)
 
     def cmp(self, reg_a, reg_b, label = ""):
         self.program += bytes([OPERATION_CMP, reg_a, reg_b, 0])

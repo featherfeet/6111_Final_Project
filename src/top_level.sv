@@ -86,8 +86,7 @@ sd_card_controller sd_card(
     .spi_cs_n(sd_dat3),
     .spi_clk(sd_sck),
     .spi_dout(sd_cmd),
-    .spi_din(sd_dat0),
-    .led(led)
+    .spi_din(sd_dat0)
 );
 
 assign jc = {4'b0, sd_dat0, sd_cmd, sd_dat3, sd_sck};
