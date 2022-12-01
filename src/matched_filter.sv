@@ -8,7 +8,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
     input wire [SAMPLE_DATA_WIDTH - 1:0] axiid,
     output logic axiov,
     output logic [MATCH_SCORE_WIDTH - 1:0] axiod,
-    output logic [MATCH_SCORE_WIDTH - 1:0] dot_product_out
+    output logic signed [MATCH_SCORE_WIDTH - 1:0] dot_product_out,
+    output logic signed [MATCH_SCORE_WIDTH - 1:0] similarity_out
 );
 
     logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_read_addr;
@@ -18,7 +19,11 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
     logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_write_addr;
     logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_write_data;
     logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_read_data;
+    logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_read_data_if_valid;
+    logic signed [MATCH_SCORE_WIDTH - 1:0] similarity_sum;
     logic ram_write_enable;
+
+    assign ram_read_data_if_valid = ram_read_addr_was_valid_pipe_2 ? ram_read_data : 'sd0;
 
     xilinx_true_dual_port_read_first_1_clock_ram #(.RAM_WIDTH(SAMPLE_DATA_WIDTH), .RAM_DEPTH(CAPTURE_LENGTH), .RAM_PERFORMANCE("HIGH_PERFORMANCE"), .INIT_FILE(FINGERPRINT_MEMORY_FILE), .NAME("Matched filter fingerprint buffer")) fingerprint_buffer (
         .addra(ram_read_addr),
@@ -44,14 +49,16 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
     logic [SAMPLE_DATA_WIDTH - 1:0] axiid_pipe_1;
     logic [SAMPLE_DATA_WIDTH - 1:0] axiid_pipe_2;
     logic signed [$clog2(CAPTURE_LENGTH) + 1:0] sample_counter;
-    logic signed [$clog2(CAPTURE_LENGTH) + 1:0] phase_shift;
+    logic signed [$clog2(CAPTURE_LENGTH * 2) + 1:0] phase_shift;
     logic signed [MATCH_SCORE_WIDTH - 1:0] dot_product;
     logic signed [MATCH_SCORE_WIDTH - 1:0] max_dot_product;
+    logic signed [$clog2(CAPTURE_LENGTH * 2) + 1:0] max_dot_product_phase_shift;
 
-    logic [2:0] state;
-    localparam STATE_SUM = 3'b001;
-    localparam STATE_FILTER = 3'b010;
-    localparam STATE_OUTPUT = 3'b100;
+    logic [3:0] state;
+    localparam STATE_SUM        = 4'b0001;
+    localparam STATE_FILTER     = 4'b0010;
+    localparam STATE_SIMILARITY = 4'b0100;
+    localparam STATE_OUTPUT     = 4'b1000;
 
     always_ff @(posedge clk) begin
         if (rst) begin
@@ -69,6 +76,8 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
             ram_read_addr_was_valid <= 'b0;
             ram_read_addr_was_valid_pipe_1 <= 'b0;
             ram_read_addr_was_valid_pipe_2 <= 'b0;
+            max_dot_product_phase_shift <= 'b0;
+            similarity_sum <= 'b0;
             state <= STATE_SUM;
         end
         else begin
@@ -98,8 +107,10 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                 end
                 STATE_FILTER: begin
                     if (phase_shift == CAPTURE_LENGTH) begin
-                        $display("Matched filter transitioning to STATE_OUTPUT.");
-                        state <= STATE_OUTPUT;
+                        $display("Matched filter transitioning to STATE_SIMILARITY.");
+                        sample_counter <= 'b0;
+                        similarity_sum <= 'b0;
+                        state <= STATE_SIMILARITY;
                     end
 
                     if (sample_counter == CAPTURE_LENGTH) begin
@@ -107,6 +118,7 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                         dot_product_out <= dot_product;
                         if (dot_product > max_dot_product) begin
                             max_dot_product <= dot_product;
+                            max_dot_product_phase_shift <= phase_shift;
                         end
                         dot_product <= 'sd0;
                         phase_shift <= phase_shift + 'b1;
@@ -122,16 +134,39 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
                         axiid_pipe_1 <= axiid;
                         axiid_pipe_2 <= axiid_pipe_1; // Delay axiid by 2 clock cycles because the RAM takes 2 clock cycles to read.
 
-                        dot_product <= dot_product + $signed($signed(ram_read_addr_was_valid_pipe_2 ? ram_read_data : 'sd0) * ($signed(axiid_pipe_2) - $signed(sum_accumulator)));
+                        dot_product <= dot_product + $signed(ram_read_data_if_valid * ($signed(axiid_pipe_2) - $signed(sum_accumulator)));
+
+                        sample_counter <= sample_counter + 'b1;
+                    end
+                end
+                STATE_SIMILARITY: begin
+                    if (sample_counter == CAPTURE_LENGTH) begin
+                        sample_counter <= 'b0;
+                        state <= STATE_OUTPUT;
+                    end
+                    else if (axiiv) begin
+                        ram_read_addr <= ($signed(max_dot_product_phase_shift) > $signed(sample_counter)) ? 'sd0 : $signed(sample_counter) - $signed(max_dot_product_phase_shift);
+
+                        ram_read_addr_was_valid <= ($signed(max_dot_product_phase_shift) < $signed(sample_counter) && $signed(sample_counter) - $signed(max_dot_product_phase_shift) < $signed(CAPTURE_LENGTH));
+                        ram_read_addr_was_valid_pipe_1 <= ram_read_addr_was_valid;
+                        ram_read_addr_was_valid_pipe_2 <= ram_read_addr_was_valid_pipe_1;
+
+                        axiid_pipe_1 <= axiid;
+                        axiid_pipe_2 <= axiid_pipe_1; // Delay axiid by 2 clock cycles because the RAM takes 2 clock cycles to read.
+
+                        similarity_sum <= similarity_sum + 16'(($signed(axiid_pipe_2) - $signed(sum_accumulator)) - $signed(ram_read_data_if_valid)) * 16'(($signed(axiid_pipe_2) - $signed(sum_accumulator)) - $signed(ram_read_data_if_valid));
+                        similarity_out <= 16'(($signed(axiid_pipe_2) - $signed(sum_accumulator)) - $signed(ram_read_data_if_valid)) * 16'(($signed(axiid_pipe_2) - $signed(sum_accumulator)) - $signed(ram_read_data_if_valid));
+                        $display("Similarity for index %d is: %d", sample_counter, 16'(($signed(axiid_pipe_2) - $signed(sum_accumulator)) - $signed(ram_read_data_if_valid)) * 16'(($signed(axiid_pipe_2) - $signed(sum_accumulator)) - $signed(ram_read_data_if_valid)));
 
                         sample_counter <= sample_counter + 'b1;
                     end
                 end
                 STATE_OUTPUT: begin
                     $display("max_dot_product for %s: %d", FINGERPRINT_MEMORY_FILE, $signed(max_dot_product));
+                    $display("similarity_sum for %s: %d", FINGERPRINT_MEMORY_FILE, $signed(similarity_sum));
                     $display("Matched filter transitioning to STATE_SUM.");
                     axiov <= 1'b1;
-                    axiod <= max_dot_product;
+                    axiod <= similarity_sum;
                     state <= STATE_SUM;
                 end
                 default: begin
