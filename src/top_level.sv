@@ -9,6 +9,7 @@ module top_level(
     input wire ja7,
     output logic [7:0] jb,
     output logic [7:0] jc,
+    output logic [7:0] jd,
     output logic [15:0] led,
     input wire btnr,
     output logic sd_reset,
@@ -100,7 +101,8 @@ filter_manager filter_manager_inst(
     .axiiv(adc_axiov),
     .axiid(adc_axiod[7:0]),
     .uart_tx(uart_tx),
-    .led(led)
+    .led(led),
+    .jd(jd)
 );
 
 assign jb = {6'b0, uart_tx, transmission_detected};

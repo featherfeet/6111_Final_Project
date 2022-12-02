@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Thu Dec  1 23:31:38 2022
+[*] Fri Dec  2 10:12:46 2022
 [*]
 [dumpfile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/filter_manager.vcd"
-[dumpfile_mtime] "Thu Dec  1 23:30:55 2022"
-[dumpfile_size] 1106042035
+[dumpfile_mtime] "Fri Dec  2 10:10:36 2022"
+[dumpfile_size] 1117920852
 [savefile] "/home/oliver/Documents/School/Sophomore Year MIT/6.111/6111_Final_Project/filter_manager_savefile.gtkw"
-[timestart] 0
+[timestart] 40037120000
 [size] 1920 1011
 [pos] -1 -1
-*-34.226757 52200000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-24.226757 40134395000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] filter_manager_tb.
 [treeopen] filter_manager_tb.filter_manager_inst.
 [sst_width] 320
@@ -55,7 +55,7 @@ filter_manager_tb.filter_manager_inst.matched_filter_1.similarity_sum[31:0]
 -FT-3DR Fingerprint
 @28
 filter_manager_tb.filter_manager_inst.matched_filter_2.axiov
-@c00421
+@c00420
 filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 @28
 (0)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
@@ -90,7 +90,7 @@ filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (29)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (30)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
 (31)filter_manager_tb.filter_manager_inst.matched_filter_2.axiod[31:0]
-@1401201
+@1401200
 -group_end
 @10420
 filter_manager_tb.filter_manager_inst.matched_filter_2.similarity_out[31:0]
@@ -102,5 +102,14 @@ filter_manager_tb.filter_manager_inst.matched_filter_2.dot_product_out[31:0]
 -
 -
 -
+@200
+-Debug SPI Port
+@28
+filter_manager_tb.filter_manager_inst.debug_spi_state[2:0]
+@29
+filter_manager_tb.filter_manager_inst.debug_spi_interface.spi_clk
+@28
+filter_manager_tb.filter_manager_inst.debug_spi_interface.spi_dout
+filter_manager_tb.filter_manager_inst.debug_spi_interface.spi_cs_n
 [pattern_trace] 1
 [pattern_trace] 0

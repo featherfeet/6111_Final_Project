@@ -8,7 +8,8 @@ module filter_manager #(parameter SAMPLE_DATA_WIDTH = 8, parameter CAPTURE_LENGT
     input wire axiiv,
     input wire [SAMPLE_DATA_WIDTH - 1:0] axiid,
     output logic uart_tx,
-    output logic [15:0] led
+    output logic [15:0] led,
+    output logic [7:0] jd
 );
 
 localparam MATCH_SCORE_WIDTH = 32;
@@ -80,6 +81,30 @@ matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH
     .axiod(matched_filter_2_axiod)
 );
 
+logic spi_axiiv;
+logic spi_axiready;
+logic [MATCH_SCORE_WIDTH - 1:0] spi_axiid;
+
+localparam DEBUG_SPI_STATE_WAIT_FOR_SPI = 3'b001;
+localparam DEBUG_SPI_STATE_SEND_FIRST_SCORE = 3'b010;
+localparam DEBUG_SPI_STATE_SEND_SECOND_SCORE = 4'b100;
+logic [2:0] debug_spi_state;
+logic [2:0] next_debug_spi_state;
+
+spi_controller #(.TRANSACTION_LENGTH_BITS(MATCH_SCORE_WIDTH), .CLOCK_DIVISION(100)) debug_spi_interface(
+    .clk(clk),
+    .rst(rst),
+    .axiiv(spi_axiiv),
+    .axiid(spi_axiid),
+    .axiov(),
+    .axiod(),
+    .axiready(spi_axiready),
+    .spi_cs_n(jd[1]),
+    .spi_clk(jd[0]),
+    .spi_dout(jd[2]),
+    .spi_din()
+);
+
 localparam STATE_START = 4'b0001;
 localparam STATE_CAPTURE = 4'b0010;
 localparam STATE_DUMP = 4'b0100;
@@ -100,13 +125,49 @@ always_ff @(posedge clk) begin
         matched_filter_axiid <= 'b0;
         filter_repetitions_counter <= 'b0;
         led <= 'b0;
+        spi_axiiv <= 'b0;
+        spi_axiid <= 'b0;
+        debug_spi_state <= DEBUG_SPI_STATE_WAIT_FOR_SPI;
+        next_debug_spi_state <= DEBUG_SPI_STATE_SEND_FIRST_SCORE;
     end
     else begin
+        case (debug_spi_state)
+            DEBUG_SPI_STATE_WAIT_FOR_SPI: begin
+                spi_axiiv <= 1'b0;
+                if (~spi_axiiv && spi_axiready) begin
+                    debug_spi_state <= next_debug_spi_state;
+                end
+            end
+            DEBUG_SPI_STATE_SEND_FIRST_SCORE: begin
+                if (matched_filter_1_axiov) begin
+                    spi_axiiv <= 1'b1;
+                    spi_axiid <= matched_filter_1_axiod;
+                    debug_spi_state <= DEBUG_SPI_STATE_WAIT_FOR_SPI;
+                    next_debug_spi_state <= DEBUG_SPI_STATE_SEND_SECOND_SCORE;
+                end
+            end
+            DEBUG_SPI_STATE_SEND_SECOND_SCORE: begin
+                spi_axiiv <= 1'b1;
+                spi_axiid <= matched_filter_2_axiod;
+                debug_spi_state <= DEBUG_SPI_STATE_WAIT_FOR_SPI;
+                next_debug_spi_state <= DEBUG_SPI_STATE_SEND_FIRST_SCORE;
+            end
+            default: begin
+                state <= DEBUG_SPI_STATE_WAIT_FOR_SPI;
+            end
+        endcase
+
         if (matched_filter_1_axiov) begin
-            led[0] <= (matched_filter_1_axiod < 'sd30_000);
-        end
-        if (matched_filter_2_axiov) begin
-            led[1] <= (matched_filter_2_axiod < 'sd30_000);
+            if (matched_filter_1_axiod < matched_filter_2_axiod) begin
+                led[0] <= 1'b1;
+                led[1] <= 1'b0;
+                led[15:2] <= 'b0;
+            end
+            else begin
+                led[0] <= 1'b0;
+                led[1] <= 1'b1;
+                led[15:2] <= 'b0;
+            end
         end
 
         case (state)

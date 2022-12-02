@@ -1,0 +1,11 @@
+FT-70D scores:
+    Filter 1: 26394
+    Filter 2: 79240
+
+FT-3DR scores:
+    Filter 1: 47688
+    Filter 2: 11964
+
+FT-3DR scores when it thinks both fired:
+    Filter 1: 23878
+    Filter 2: 4369

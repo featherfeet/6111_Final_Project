@@ -43,6 +43,9 @@ always_ff @(posedge clk) begin
         state <= STATE_IDLE;
         axiod <= 'b0;
         axiov <= 'b0;
+        spi_dout <= 'b1;
+        spi_clk <= 'b1;
+        spi_cs_n <= 'b1;
     end
     else begin
         case (state)
