@@ -62,6 +62,10 @@ logic matched_filter_1_axiov;
 logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_1_axiod;
 logic matched_filter_2_axiov;
 logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_2_axiod;
+logic matched_filter_3_axiov;
+logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_3_axiod;
+logic matched_filter_4_axiov;
+logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_4_axiod;
 
 matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT70D_bufferdump_1_zero_mean.memh")) matched_filter_1(
     .clk(clk),
@@ -79,6 +83,24 @@ matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH
     .axiid(matched_filter_axiid),
     .axiov(matched_filter_2_axiov),
     .axiod(matched_filter_2_axiod)
+);
+
+matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT50R_3_bufferdump_1_zero_mean.memh")) matched_filter_3(
+    .clk(clk),
+    .rst(rst),
+    .axiiv(matched_filter_axiiv),
+    .axiid(matched_filter_axiid),
+    .axiov(matched_filter_3_axiov),
+    .axiod(matched_filter_3_axiod)
+);
+
+matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT50R_3_bufferdump_3_zero_mean.memh")) matched_filter_4(
+    .clk(clk),
+    .rst(rst),
+    .axiiv(matched_filter_axiiv),
+    .axiid(matched_filter_axiid),
+    .axiov(matched_filter_4_axiov),
+    .axiod(matched_filter_4_axiod)
 );
 
 logic spi_axiiv;
@@ -158,14 +180,39 @@ always_ff @(posedge clk) begin
         endcase
 
         if (matched_filter_1_axiov) begin
-            if (matched_filter_1_axiod < matched_filter_2_axiod) begin
+            if (matched_filter_1_axiod < matched_filter_2_axiod && matched_filter_1_axiod < matched_filter_3_axiod && matched_filter_1_axiod < matched_filter_4_axiod) begin
                 led[0] <= 1'b1;
                 led[1] <= 1'b0;
+                led[2] <= 1'b0;
+                led[3] <= 1'b0;
+                led[15:2] <= 'b0;
+            end
+            else if (matched_filter_2_axiod < matched_filter_1_axiod && matched_filter_2_axiod < matched_filter_3_axiod && matched_filter_2_axiod < matched_filter_4_axiod) begin
+                led[0] <= 1'b0;
+                led[1] <= 1'b1;
+                led[2] <= 1'b0;
+                led[3] <= 1'b0;
+                led[15:2] <= 'b0;
+            end
+            else if (matched_filter_3_axiod < matched_filter_1_axiod && matched_filter_3_axiod < matched_filter_2_axiod && matched_filter_3_axiod < matched_filter_4_axiod) begin
+                led[0] <= 1'b0;
+                led[1] <= 1'b0;
+                led[2] <= 1'b1;
+                led[3] <= 1'b0;
+                led[15:2] <= 'b0;
+            end
+            else if (matched_filter_4_axiod < matched_filter_1_axiod && matched_filter_4_axiod < matched_filter_2_axiod && matched_filter_4_axiod < matched_filter_3_axiod) begin
+                led[0] <= 1'b0;
+                led[1] <= 1'b0;
+                led[2] <= 1'b0;
+                led[3] <= 1'b1;
                 led[15:2] <= 'b0;
             end
             else begin
                 led[0] <= 1'b0;
-                led[1] <= 1'b1;
+                led[1] <= 1'b0;
+                led[2] <= 1'b0;
+                led[3] <= 1'b0;
                 led[15:2] <= 'b0;
             end
         end

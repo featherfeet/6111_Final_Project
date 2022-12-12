@@ -53,7 +53,7 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
     logic signed [$clog2(CAPTURE_LENGTH * 2) + 1:0] phase_shift;
     logic signed [MATCH_SCORE_WIDTH - 1:0] dot_product;
     logic signed [SAMPLE_DATA_WIDTH:0] subtraction_result;
-    logic signed [SAMPLE_DATA_WIDTH * 2 - 1:0] multiplication_result;
+    (* use_dsp = "yes" *) logic signed [SAMPLE_DATA_WIDTH * 2 - 1:0] multiplication_result;
     logic signed [MATCH_SCORE_WIDTH - 1:0] max_dot_product;
     logic signed [$clog2(CAPTURE_LENGTH * 2) + 1:0] max_dot_product_phase_shift;
 
