@@ -9,19 +9,19 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
     output logic axiov,
     output logic [MATCH_SCORE_WIDTH - 1:0] axiod,
     output logic signed [MATCH_SCORE_WIDTH - 1:0] dot_product_out,
-    output logic signed [MATCH_SCORE_WIDTH - 1:0] similarity_out
+    output logic signed [MATCH_SCORE_WIDTH - 1:0] similarity_out,
+    input wire [$clog2(CAPTURE_LENGTH) - 1:0] ram_write_addr,
+    input wire signed [SAMPLE_DATA_WIDTH - 1:0] ram_write_data,
+    input wire ram_write_enable
 );
 
     logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_read_addr;
     logic ram_read_addr_was_valid;
     logic ram_read_addr_was_valid_pipe_1;
     logic ram_read_addr_was_valid_pipe_2;
-    logic [$clog2(CAPTURE_LENGTH) - 1:0] ram_write_addr;
-    logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_write_data;
     logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_read_data;
     logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_read_data_if_valid;
     logic signed [MATCH_SCORE_WIDTH - 1:0] similarity_sum;
-    logic ram_write_enable;
 
     assign ram_read_data_if_valid = ram_read_addr_was_valid_pipe_2 ? ram_read_data : 'sd0;
     logic signed [SAMPLE_DATA_WIDTH - 1:0] ram_read_data_if_valid_pipe_1;
@@ -67,9 +67,6 @@ module matched_filter #(parameter SAMPLE_DATA_WIDTH = 8, parameter MATCH_SCORE_W
         if (rst) begin
             sum_accumulator <= 'b0;
             ram_read_addr <= 'b0;
-            ram_write_addr <= 'b0;
-            ram_write_data <= 'b0;
-            ram_write_enable <= 'b0;
             axiid_pipe_1 <= 'b0;
             axiid_pipe_2 <= 'b0;
             dot_product <= 'b0;

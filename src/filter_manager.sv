@@ -1,12 +1,14 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module filter_manager #(parameter SAMPLE_DATA_WIDTH = 8, parameter CAPTURE_LENGTH = 1000) (
+module filter_manager #(parameter SAMPLE_DATA_WIDTH = 8, parameter CAPTURE_LENGTH = 1000, parameter FILTERS_TO_CREATE = 2) (
     input wire clk,
     input wire rst,
     input wire trigger,
     input wire axiiv,
     input wire [SAMPLE_DATA_WIDTH - 1:0] axiid,
+    input wire sd_card_axiov,
+    input wire [7:0] sd_card_axiod,
     output logic uart_tx,
     output logic [15:0] led,
     output logic [7:0] jd
@@ -53,55 +55,50 @@ uart uart_inst(
     .uart_tx(uart_tx)
 );
 
+logic [$clog2(CAPTURE_LENGTH * FILTERS_TO_CREATE):0] sd_card_byte_counter;
+always_ff @(posedge clk) begin
+    if (rst) begin
+        sd_card_byte_counter <= 'b0;
+    end
+    else begin
+        if (sd_card_axiov) begin
+            sd_card_byte_counter <= sd_card_byte_counter + 'b1;
+        end
+    end
+end
+
 logic matched_filter_axiiv;
 logic matched_filter_axiiv_pipe_1;
 logic matched_filter_axiiv_pipe_2;
 logic [SAMPLE_DATA_WIDTH - 1:0] matched_filter_axiid;
 
-logic matched_filter_1_axiov;
-logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_1_axiod;
-logic matched_filter_2_axiov;
-logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_2_axiod;
-logic matched_filter_3_axiov;
-logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_3_axiod;
-logic matched_filter_4_axiov;
-logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_4_axiod;
+genvar i;
+generate
+    for (i = 0; i < FILTERS_TO_CREATE; i = i + 1) begin:generated_filters
+        logic matched_filter_axiov;
+        logic [MATCH_SCORE_WIDTH - 1:0] matched_filter_axiod;
 
-matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT70D_bufferdump_1_zero_mean.memh")) matched_filter_1(
-    .clk(clk),
-    .rst(rst),
-    .axiiv(matched_filter_axiiv),
-    .axiid(matched_filter_axiid),
-    .axiov(matched_filter_1_axiov),
-    .axiod(matched_filter_1_axiod)
-);
+        logic [$clog2(CAPTURE_LENGTH) - 1:0] matched_filter_ram_write_addr;
+        logic signed [SAMPLE_DATA_WIDTH - 1:0] matched_filter_ram_write_data;
+        logic matched_filter_ram_write_enable;
 
-matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT3D_bufferdump_1_zero_mean.memh")) matched_filter_2(
-    .clk(clk),
-    .rst(rst),
-    .axiiv(matched_filter_axiiv),
-    .axiid(matched_filter_axiid),
-    .axiov(matched_filter_2_axiov),
-    .axiod(matched_filter_2_axiod)
-);
+        assign matched_filter_ram_write_enable = sd_card_axiov && sd_card_byte_counter >= i * CAPTURE_LENGTH && sd_card_byte_counter < (i + 1) * CAPTURE_LENGTH;
+        assign matched_filter_ram_write_data = sd_card_axiod;
+        assign matched_filter_ram_write_addr = sd_card_byte_counter - i * CAPTURE_LENGTH;
 
-matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT50R_3_bufferdump_1_zero_mean.memh")) matched_filter_3(
-    .clk(clk),
-    .rst(rst),
-    .axiiv(matched_filter_axiiv),
-    .axiid(matched_filter_axiid),
-    .axiov(matched_filter_3_axiov),
-    .axiod(matched_filter_3_axiod)
-);
-
-matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("sim/FT50R_3_bufferdump_3_zero_mean.memh")) matched_filter_4(
-    .clk(clk),
-    .rst(rst),
-    .axiiv(matched_filter_axiiv),
-    .axiid(matched_filter_axiid),
-    .axiov(matched_filter_4_axiov),
-    .axiod(matched_filter_4_axiod)
-);
+        matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("")) (
+            .clk(clk),
+            .rst(rst),
+            .axiiv(matched_filter_axiiv),
+            .axiid(matched_filter_axiid),
+            .axiov(matched_filter_axiov),
+            .axiod(matched_filter_axiod),
+            .ram_write_addr(matched_filter_ram_write_addr),
+            .ram_write_data(matched_filter_ram_write_data),
+            .ram_write_enable(matched_filter_ram_write_enable)
+        );
+    end
+endgenerate
 
 logic spi_axiiv;
 logic spi_axiready;
@@ -161,16 +158,16 @@ always_ff @(posedge clk) begin
                 end
             end
             DEBUG_SPI_STATE_SEND_FIRST_SCORE: begin
-                if (matched_filter_1_axiov) begin
+                if (generated_filters[0].matched_filter_axiov) begin
                     spi_axiiv <= 1'b1;
-                    spi_axiid <= matched_filter_1_axiod;
+                    spi_axiid <= generated_filters[0].matched_filter_axiod;
                     debug_spi_state <= DEBUG_SPI_STATE_WAIT_FOR_SPI;
                     next_debug_spi_state <= DEBUG_SPI_STATE_SEND_SECOND_SCORE;
                 end
             end
             DEBUG_SPI_STATE_SEND_SECOND_SCORE: begin
                 spi_axiiv <= 1'b1;
-                spi_axiid <= matched_filter_2_axiod;
+                spi_axiid <= generated_filters[1].matched_filter_axiod;
                 debug_spi_state <= DEBUG_SPI_STATE_WAIT_FOR_SPI;
                 next_debug_spi_state <= DEBUG_SPI_STATE_SEND_FIRST_SCORE;
             end
@@ -178,44 +175,6 @@ always_ff @(posedge clk) begin
                 state <= DEBUG_SPI_STATE_WAIT_FOR_SPI;
             end
         endcase
-
-        if (matched_filter_1_axiov) begin
-            if (matched_filter_1_axiod < matched_filter_2_axiod && matched_filter_1_axiod < matched_filter_3_axiod && matched_filter_1_axiod < matched_filter_4_axiod) begin
-                led[0] <= 1'b1;
-                led[1] <= 1'b0;
-                led[2] <= 1'b0;
-                led[3] <= 1'b0;
-                led[15:2] <= 'b0;
-            end
-            else if (matched_filter_2_axiod < matched_filter_1_axiod && matched_filter_2_axiod < matched_filter_3_axiod && matched_filter_2_axiod < matched_filter_4_axiod) begin
-                led[0] <= 1'b0;
-                led[1] <= 1'b1;
-                led[2] <= 1'b0;
-                led[3] <= 1'b0;
-                led[15:2] <= 'b0;
-            end
-            else if (matched_filter_3_axiod < matched_filter_1_axiod && matched_filter_3_axiod < matched_filter_2_axiod && matched_filter_3_axiod < matched_filter_4_axiod) begin
-                led[0] <= 1'b0;
-                led[1] <= 1'b0;
-                led[2] <= 1'b1;
-                led[3] <= 1'b0;
-                led[15:2] <= 'b0;
-            end
-            else if (matched_filter_4_axiod < matched_filter_1_axiod && matched_filter_4_axiod < matched_filter_2_axiod && matched_filter_4_axiod < matched_filter_3_axiod) begin
-                led[0] <= 1'b0;
-                led[1] <= 1'b0;
-                led[2] <= 1'b0;
-                led[3] <= 1'b1;
-                led[15:2] <= 'b0;
-            end
-            else begin
-                led[0] <= 1'b0;
-                led[1] <= 1'b0;
-                led[2] <= 1'b0;
-                led[3] <= 1'b0;
-                led[15:2] <= 'b0;
-            end
-        end
 
         case (state)
             STATE_START: begin

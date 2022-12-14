@@ -108,7 +108,9 @@ filter_manager filter_manager_inst(
     .axiid(adc_axiod[7:0]),
     .uart_tx(uart_tx),
     //.led(led),
-    .jd(jd)
+    .jd(jd),
+    .sd_card_axiov(sd_card_axiov),
+    .sd_card_axiod(sd_card_axiod)
 );
 
 assign jb = {5'b0, sd_card_axiov, uart_tx, transmission_detected};
