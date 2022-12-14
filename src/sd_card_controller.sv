@@ -7,7 +7,8 @@ module sd_card_controller(
     output logic spi_cs_n,
     output logic spi_clk,
     output logic spi_dout,
-    output logic spi_din
+    output logic spi_din,
+    output logic [15:0] led
 );
 
 localparam PROGRAM_ROM_LENGTH = 1000;
@@ -312,6 +313,7 @@ always_ff @(posedge clk) begin
                     OPERATION_ERROR: begin
                         $display("ERROR %d", ram_read_data[23:16]);
                         error_code <= ram_read_data[23:16];
+                        led <= error_code;
                         state <= STATE_ERROR;
                     end
                     OPERATION_MULT: begin

@@ -2,6 +2,8 @@
 
 from assembler import *
 
+NUM_BYTES_TO_READ = 512 * 10 # 10 Blocks (must always be a multiple of 512)
+
 firmware = Assembler()
 
 firmware.set_cs(1)
@@ -116,10 +118,78 @@ firmware.jmp("try_cmd1")
 
 # TODO: Add SDHC card support here by checking the OCR register. If SDHC, set R7 to 3.
 
-# Main loop where we process AXI commands and read data from the card.
-firmware.set_cs(1, label = "got_ready_state")
+# Send a few extra 0xFF's to let the card rest, see https://stackoverflow.com/a/2375234.
+firmware.load_lower_constant(0xFF, REGISTER_R2, label = "got_ready_state")
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.spi_transaction(REGISTER_R2, REGISTER_R4)
+firmware.spi_transaction(REGISTER_R2, REGISTER_R4)
+firmware.spi_transaction(REGISTER_R2, REGISTER_R4)
+firmware.spi_transaction(REGISTER_R2, REGISTER_R4)
+firmware.spi_transaction(REGISTER_R2, REGISTER_R4)
+firmware.set_cs(1)
+
+# Main loop where we read data from the card and send it out over AXI.
+firmware.load_lower_constant(NUM_BYTES_TO_READ, REGISTER_R9) # R9 is total number of bytes to read.
+firmware.load_upper_constant(0, REGISTER_R9)
+firmware.load_lower_constant(0, REGISTER_R10) # R10 is read address. Gets incremented by 1 block (512 bytes) each loop until R10 >= R9.
+firmware.load_upper_constant(0, REGISTER_R10)
+firmware.set_cs(0, label = "main_loop")
+# TODO: Add SDHC card support here by dividing read address by 512 to get a block address if R7 == 3.
+# Send CMD17 to read a block at address 0.
+firmware.load_lower_constant(17, REGISTER_R2)
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.sd_command(REGISTER_R2, REGISTER_R10, REGISTER_R6)
+firmware.load_lower_constant(512, REGISTER_R4)
+firmware.load_upper_constant(0, REGISTER_R4)
+firmware.add(REGISTER_R10, REGISTER_R4, REGISTER_R10)
+firmware.load_lower_constant(0, REGISTER_R2)
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.cmp(REGISTER_R6, REGISTER_R2)
+firmware.jmpneq("cmd17_error")
+# Await start block token.
+firmware.load_lower_constant(0xFF, REGISTER_R2, label = "await_start_block")
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.spi_transaction(REGISTER_R2, REGISTER_R4)
+firmware.cmp(REGISTER_R2, REGISTER_R4) # If command return value is 255, keep waiting.
+firmware.jmpeq("await_start_block")
+# Check for read error.
+firmware.load_lower_constant(0xFE, REGISTER_R2)
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.cmp(REGISTER_R2, REGISTER_R4)
+firmware.jmpneq("read_error")
+# Read 512 bytes.
+firmware.load_lower_constant(0, REGISTER_R2)
+firmware.load_upper_constant(0, REGISTER_R2)
+firmware.load_lower_constant(1, REGISTER_R3)
+firmware.load_upper_constant(0, REGISTER_R3)
+firmware.load_lower_constant(511, REGISTER_R4)
+firmware.load_upper_constant(0, REGISTER_R4)
+firmware.load_lower_constant(0xFF, REGISTER_R5)
+firmware.load_upper_constant(0, REGISTER_R5)
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6, label = "read_loop")
+#firmware.write_axi(REGISTER_R6) # Write byte out to AXI for rest of system to use.
+firmware.add(REGISTER_R2, REGISTER_R3, REGISTER_R2)
+firmware.cmp(REGISTER_R2, REGISTER_R4)
+firmware.jmplt("read_loop")
+# Read checksum.
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
+# A few extra 0xFF's to let the card rest.
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
+firmware.spi_transaction(REGISTER_R5, REGISTER_R6)
+# Set CS high.
+firmware.set_cs(1)
+# Loop code.
+firmware.cmp(REGISTER_R10, REGISTER_R9)
+firmware.jmplt("main_loop")
 
 firmware.error(0b101010)
+
+firmware.error(17, label = "cmd17_error")
+firmware.error(23, label = "read_error")
 
 binary = firmware.get_program()
 

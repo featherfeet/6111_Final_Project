@@ -1,5 +1,10 @@
 +=======================+=======================+===============================================================+
 | Launch Setup Clock    | Launch Hold Clock     | Pin                                                           |
 +=======================+=======================+===============================================================+
-| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_4/sum_accumulator_reg[0]/D |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_2/sum_accumulator_reg[4]/D |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_2/sum_accumulator_reg[3]/D |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_2/sum_accumulator_reg[6]/D |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_2/sum_accumulator_reg[7]/D |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_2/sum_accumulator_reg[2]/D |
+| sys_clk_out_clk_wiz_0 | sys_clk_out_clk_wiz_0 | filter_manager_inst/matched_filter_2/sum_accumulator_reg[1]/D |
 +-----------------------+-----------------------+---------------------------------------------------------------+
