@@ -8,7 +8,9 @@ module sd_card_controller(
     output logic spi_clk,
     output logic spi_dout,
     output logic spi_din,
-    output logic [15:0] led
+    output logic [15:0] led,
+    output logic axiov,
+    output logic [7:0] axiod
 );
 
 localparam PROGRAM_ROM_LENGTH = 1000;
@@ -123,6 +125,8 @@ always_ff @(posedge clk) begin
         state <= STATE_READ_INSTRUCTION;
         sd_card_command_state <= SD_CARD_COMMAND_STATE_WAIT_FOR_SPI;
         next_sd_card_command_state <= SD_CARD_COMMAND_STATE_START;
+        axiov <= 'b0;
+        axiod <= 'b0;
     end
     else begin
         case (state)
@@ -341,7 +345,16 @@ always_ff @(posedge clk) begin
 
                     end
                     OPERATION_WRITE_AXI: begin
-
+                        if (axiov) begin
+                            axiov <= 1'b0;
+                            register_file[REGISTER_IP] <= register_file[REGISTER_IP] + INSTRUCTION_LENGTH_BYTES;
+                            state <= STATE_READ_INSTRUCTION;
+                        end
+                        else begin
+                            $display("WRITE_AXI r%d", ram_read_data[23:16]);
+                            axiov <= 1'b1;
+                            axiod <= register_file[ram_read_data[23:16]];
+                        end
                     end
                     default: begin
                         error_code <= ERROR_CODE_INVALID_OPERATION;

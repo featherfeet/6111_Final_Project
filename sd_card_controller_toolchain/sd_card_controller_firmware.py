@@ -167,6 +167,7 @@ firmware.load_upper_constant(0, REGISTER_R4)
 firmware.load_lower_constant(0xFF, REGISTER_R5)
 firmware.load_upper_constant(0, REGISTER_R5)
 firmware.spi_transaction(REGISTER_R5, REGISTER_R6, label = "read_loop")
+firmware.write_axi(REGISTER_R6)
 #firmware.write_axi(REGISTER_R6) # Write byte out to AXI for rest of system to use.
 firmware.add(REGISTER_R2, REGISTER_R3, REGISTER_R2)
 firmware.cmp(REGISTER_R2, REGISTER_R4)

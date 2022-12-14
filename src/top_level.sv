@@ -81,6 +81,9 @@ assign sd_reset = rst;
 assign sd_dat1 = 1'b1;
 assign sd_dat2 = 1'b1;
 
+logic sd_card_axiov;
+logic [7:0] sd_card_axiod;
+
 sd_card_controller sd_card(
     .clk(sys_clk),
     .rst(rst),
@@ -88,7 +91,9 @@ sd_card_controller sd_card(
     .spi_clk(sd_sck),
     .spi_dout(sd_cmd),
     .spi_din(sd_dat0),
-    .led(led)
+    .led(led),
+    .axiov(sd_card_axiov),
+    .axiod(sd_card_axiod)
 );
 
 assign jc = {4'b0, sd_dat0, sd_cmd, sd_dat3, sd_sck};
@@ -106,6 +111,6 @@ filter_manager filter_manager_inst(
     .jd(jd)
 );
 
-assign jb = {6'b0, uart_tx, transmission_detected};
+assign jb = {5'b0, sd_card_axiov, uart_tx, transmission_detected};
 
 endmodule
