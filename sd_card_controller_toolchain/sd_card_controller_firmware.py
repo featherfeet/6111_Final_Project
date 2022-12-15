@@ -2,7 +2,7 @@
 
 from assembler import *
 
-NUM_BYTES_TO_READ = 512 * 10 # 10 Blocks (must always be a multiple of 512)
+NUM_BYTES_TO_READ = 512 * 10 # 196 Blocks (must always be a multiple of 512)
 
 firmware = Assembler()
 

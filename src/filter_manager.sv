@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module filter_manager #(parameter SAMPLE_DATA_WIDTH = 8, parameter CAPTURE_LENGTH = 1000, parameter FILTERS_TO_CREATE = 2) (
+module filter_manager #(parameter SAMPLE_DATA_WIDTH = 8, parameter CAPTURE_LENGTH = 1000, parameter FILTERS_TO_CREATE = 10) (
     input wire clk,
     input wire rst,
     input wire trigger,
@@ -86,7 +86,7 @@ generate
         assign matched_filter_ram_write_data = sd_card_axiod;
         assign matched_filter_ram_write_addr = sd_card_byte_counter - i * CAPTURE_LENGTH;
 
-        matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("")) (
+        matched_filter #(.SAMPLE_DATA_WIDTH(SAMPLE_DATA_WIDTH), .MATCH_SCORE_WIDTH(MATCH_SCORE_WIDTH), .CAPTURE_LENGTH(CAPTURE_LENGTH), .FINGERPRINT_MEMORY_FILE("")) matched_filter_inst (
             .clk(clk),
             .rst(rst),
             .axiiv(matched_filter_axiiv),
@@ -150,6 +150,15 @@ always_ff @(posedge clk) begin
         next_debug_spi_state <= DEBUG_SPI_STATE_SEND_FIRST_SCORE;
     end
     else begin
+        if (generated_filters[0].matched_filter_axiov) begin
+            if (generated_filters[0].matched_filter_axiod < generated_filters[1].matched_filter_axiod) begin
+                led <= 16'b01;
+            end
+            else begin
+                led <= 16'b10;
+            end
+        end
+
         case (debug_spi_state)
             DEBUG_SPI_STATE_WAIT_FOR_SPI: begin
                 spi_axiiv <= 1'b0;
@@ -189,8 +198,8 @@ always_ff @(posedge clk) begin
                     ram_write_addr <= 'b0;
                     ram_read_addr <= 'b0;
                     capturing <= 'b0;
-                    $display("Filter manager entering FILTER state, skipping DUMP.");
-                    state <= STATE_FILTER; // TODO PUT BACK
+                    $display("Filter manager entering DUMP state.");
+                    state <= STATE_DUMP;
                 end
                 else if (axiiv) begin
                     ram_write_addr <= ram_write_addr + 'b1;

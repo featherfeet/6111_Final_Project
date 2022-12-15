@@ -60,7 +60,7 @@ initial begin
         end
         axiiv = 0;
     end
-    #1000;
+    #10000;
 
     $finish;
 end

@@ -28,7 +28,7 @@ filter_manager #(.SAMPLE_DATA_WIDTH(8), .CAPTURE_LENGTH(1000)) filter_manager_in
 logic [7:0] test_signal_buffer [0:CAPTURE_LENGTH - 1];
 
 initial begin
-    $dumpfile("filter_manager.lxt");
+    $dumpfile("filter_manager.vcd");
     $dumpvars(0, filter_manager_tb);
     $display("Starting sim...");
 

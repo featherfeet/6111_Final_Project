@@ -91,7 +91,7 @@ sd_card_controller sd_card(
     .spi_clk(sd_sck),
     .spi_dout(sd_cmd),
     .spi_din(sd_dat0),
-    .led(led),
+    //.led(led),
     .axiov(sd_card_axiov),
     .axiod(sd_card_axiod)
 );
@@ -107,7 +107,7 @@ filter_manager filter_manager_inst(
     .axiiv(adc_axiov),
     .axiid(adc_axiod[7:0]),
     .uart_tx(uart_tx),
-    //.led(led),
+    .led(led),
     .jd(jd),
     .sd_card_axiov(sd_card_axiov),
     .sd_card_axiod(sd_card_axiod)
